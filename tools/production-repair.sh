@@ -2,9 +2,8 @@
 set -Eeuo pipefail
 
 # One-command production deployment/repair for Synology.
-# The script is intentionally path-independent: ROOT is the repository that
-# contains this file, not a hard-coded /volume1/web/... path.
-ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)"
+# ROOT may be supplied when this script is executed from a temporary file.
+ROOT="${ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)}"
 PHP="${PHP_BIN:-/usr/local/bin/php82}"
 REMOTE="origin"
 BRANCH="main"
@@ -69,8 +68,6 @@ printf 'VERSION=%s MANIFEST=%s\n' "$VERSION" "$MANIFEST_VERSION" | tee -a "$LOG"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "VERSION.txt tidak valid."
 [ "$VERSION" = "$MANIFEST_VERSION" ] || die "VERSION.txt dan update-manifest.json tidak sinkron."
 
-# Root PHP files must use the local config beside the file. No absolute
-# production filesystem path is allowed anywhere in application PHP.
 if grep -RInE --include='*.php' "require(_once)?[[:space:]]*\(?[[:space:]]*['\"][^'\"]*\.\./config\.php['\"]" "$STAGE" 2>/dev/null | grep -E '/(index|login|logout|health)\.php:' >/tmp/ujian-root-ref.$$.txt; then
   cat /tmp/ujian-root-ref.$$.txt | tee -a "$LOG"; rm -f /tmp/ujian-root-ref.$$.txt
   die "Root entrypoint memiliki referensi ../config.php yang salah."
@@ -102,8 +99,6 @@ say "5/10" "DEPLOY EXACT COMMIT + PRESERVE LOCAL CONFIG"
 git reset --hard "$TARGET" >/dev/null
 if [ -f "$BACKUP/config.local.php" ]; then cp -p "$BACKUP/config.local.php" "$ROOT/config.local.php"; else printf '%s\n' 'config.local.php tidak ada; aplikasi harus menggunakan DB_* environment variables.' | tee -a "$LOG"; fi
 
-# Deterministic permissions. Do not use sudo -u FPM here: on Synology the
-# process listing can truncate account names and sudoers may reject them.
 find "$ROOT" -type d ! -path "$ROOT/.git*" -exec chmod 755 {} + 2>/dev/null || true
 find "$ROOT" -type f -name '*.php' -exec chmod 644 {} + 2>/dev/null || true
 find "$ROOT" -type f -name '*.txt' -exec chmod 644 {} + 2>/dev/null || true
@@ -113,8 +108,6 @@ for d in storage storage/backups storage/update_uploads storage/update_staging; 
 for f in "${REQUIRED[@]}"; do [ -r "$ROOT/$f" ] || die "File production tidak readable setelah deploy: $f"; done
 
 say "6/10" "LOCAL PHP PREFLIGHT + DATABASE"
-# This tests the exact deployed config without pretending to be FPM. The real
-# FPM/runtime test is the HTTP smoke test below, which avoids sudoers issues.
 TEST="$ROOT/.production_release_test.php"
 cat > "$TEST" <<'PHP'
 <?php

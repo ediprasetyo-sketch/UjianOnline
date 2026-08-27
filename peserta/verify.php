@@ -27,19 +27,27 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     } else {
         $pdo->beginTransaction();
         try {
-            $pdo->prepare('UPDATE users
-                SET full_name=?, email_verified_at=COALESCE(email_verified_at,NOW()),
-                    email_verify_token=NULL, email_verify_expires_at=NULL
-                WHERE id=? AND email_verify_token=?')->execute([$fullName,(int)$u['id'],$token]);
-            if($pdo->rowCount()!==1){
+            // Re-check the one-time token inside the transaction. Do not depend on
+            // PDO::rowCount(), because affected-row semantics vary by MySQL setup.
+            $lock=$pdo->prepare('SELECT id, username, email, email_verify_token FROM users WHERE id=? AND email_verify_token=? AND email_verify_expires_at>=NOW() LIMIT 1 FOR UPDATE');
+            $lock->execute([(int)$u['id'],$token]);
+            $lockedUser=$lock->fetch();
+            if(!$lockedUser){
                 throw new RuntimeException('Token verifikasi sudah tidak aktif.');
             }
+
+            $update=$pdo->prepare('UPDATE users
+                SET full_name=?, email_verified_at=COALESCE(email_verified_at,NOW()),
+                    email_verify_token=NULL, email_verify_expires_at=NULL
+                WHERE id=?');
+            $update->execute([$fullName,(int)$lockedUser['id']]);
+
             $pdo->commit();
             session_regenerate_id(true);
             $_SESSION['participant']=[
-                'id'=>(int)$u['id'],
-                'username'=>$u['username'],
-                'email'=>$u['email'],
+                'id'=>(int)$lockedUser['id'],
+                'username'=>$lockedUser['username'],
+                'email'=>$lockedUser['email'],
                 'full_name'=>$fullName,
                 'role'=>'participant'
             ];
@@ -49,6 +57,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
             exit;
         } catch(Throwable $e){
             if($pdo->inTransaction())$pdo->rollBack();
+            error_log('UjianOnline participant verify save failed: '.$e->getMessage());
             $error='Nama peserta belum dapat disimpan. Silakan coba lagi.';
         }
     }

@@ -21,6 +21,23 @@ jobs:
         with:
           php-version: '8.2'
 
+      - name: Required production files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in VERSION.txt update-manifest.json index.php login.php logout.php config.php admin/index.php admin/update.php admin/participants.php peserta/index.php peserta/access.php; do
+            test -f "$f"
+          done
+
+      - name: Version and manifest audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '\r\n' < VERSION.txt)"
+          manifest="$(php -r '$d=json_decode(file_get_contents("update-manifest.json"), true); echo $d["version"] ?? "";')"
+          test "$version" = "$manifest"
+          echo "VERSION=$version"
+
       - name: PHP syntax audit
         shell: bash
         run: |
@@ -35,8 +52,12 @@ jobs:
         run: |
           set -euo pipefail
           if grep -RInE --include='*.php' '(/volume1/web/ujian-online|require[[:space:]]*["'"']?/volume1|include[[:space:]]*["'"']?/volume1)' . \
-            --exclude-dir=.git --exclude='php_check.php'; then
+            --exclude-dir=.git --exclude-dir=storage --exclude-dir=release --exclude-dir=releases; then
             echo 'Hard-coded production filesystem path found.'
+            exit 1
+          fi
+          if grep -nE "require(_once)?[[:space:]]+__DIR__[[:space:]]*\.[[:space:]]*['\"]/?\.\./config\.php" ./*.php 2>/dev/null; then
+            echo 'Root PHP file references ../config.php.'
             exit 1
           fi
 

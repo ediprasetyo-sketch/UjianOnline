@@ -1,0 +1,6 @@
+V6.3.52 — Questions Page Structure Repair
+- Rebuilt the active admin/questions.php form/sidebar/footer structure.
+- Removed duplicated orphan HTML appended after </body>.
+- Removed duplicate Save and Import controls outside the layout.
+- Matrix/DISC now hides standard Kunci Jawaban and shows only Kunci MIRIP / Kunci TIDAK MIRIP.
+- Footer is rendered once at the bottom of the admin layout.

@@ -1,0 +1,7 @@
+V6.3.28 — Admin Dashboard & Exam Monitoring
+- Dashboard monitoring for live exams, running attempts and completed attempts.
+- Live exam rows with running/completed participant counts.
+- Participant watchlist for unfinished attempts.
+- Direct monitoring links to attempt detail.
+- Refresh control and clearer operational status cards.
+- Existing admin navigation and security baseline retained.

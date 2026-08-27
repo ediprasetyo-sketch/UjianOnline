@@ -1,0 +1,7 @@
+Runtime data excluded from release/update ZIP:
+storage/backups/
+storage/update_uploads/
+storage/update_staging/
+uploads/questions/
+
+The folders remain on the server and are preserved during application updates.

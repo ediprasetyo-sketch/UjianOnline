@@ -1,0 +1,8 @@
+V6.3.29 — Automatic Exam Monitoring
+- Added authenticated admin monitoring endpoint.
+- Dashboard automatically refreshes monitoring data every 15 seconds.
+- Live exam, running attempt and completed attempt counts update without full reload.
+- Added live exam countdown timer.
+- Added notification when new participants complete an exam.
+- Manual refresh remains available.
+- No WebSocket server required.

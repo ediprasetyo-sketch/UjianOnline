@@ -1,0 +1,8 @@
+V6.3.48 — Full Synchronization Repair
+- Moved Matrix/DISC schema compatibility logic out of config.php into includes/schema_sync.php.
+- Fixed partial ZIP update mismatch caused by config.php intentionally being preserved.
+- Matrix/DISC schema repair now runs when opening or saving questions.
+- Edit Question now supports Matrix/DISC.
+- Question list displays Matrix/DISC keys correctly.
+- VERSION.txt and update-manifest.json synchronized.
+- Existing database credentials remain preserved during ZIP updates.

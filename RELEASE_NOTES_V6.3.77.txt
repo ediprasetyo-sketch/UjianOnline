@@ -1,0 +1,9 @@
+UJIAN ONLINE V6.3.77
+
+Perbaikan:
+- Header halaman Hasil Ujian diselaraskan secara visual dengan Dashboard Admin.
+- Tata letak topbar, ukuran judul, profil, avatar, dan posisi Keluar dibuat konsisten.
+- Layout statistik dan tabel hasil tetap menggunakan perbaikan V6.3.76.
+
+Catatan:
+Setelah update, lakukan hard refresh browser (Ctrl+F5) untuk memastikan CSS terbaru dimuat.

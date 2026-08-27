@@ -1,0 +1,14 @@
+/* V6.3.82: exact shared shell based on admin-ui.css Dashboard baseline */
+.admin-layout{min-height:100vh!important;background:#f4f7fb!important}
+.admin-sidebar{width:246px!important;background:linear-gradient(180deg,#142238,#17273d)!important}
+.admin-brand{height:64px!important;padding:0 22px!important;font-size:20px!important}
+.admin-brand .mark{width:30px!important;height:30px!important}
+.admin-main{margin-left:246px!important;width:calc(100% - 246px)!important}
+.admin-topbar{height:64px!important;padding:0 28px!important}
+.admin-topbar h1{font-size:21px!important}
+.profile{min-height:0!important}
+.admin-content,.admin-content.result-page{max-width:1500px!important;padding:28px 26px 18px!important;margin:0 auto!important}
+.admin-footer{padding:17px 26px!important}
+.page-head{margin-bottom:20px!important}
+.page-title{font-size:25px!important}
+@media(max-width:760px){.admin-sidebar{width:246px!important}.admin-main{margin-left:0!important;width:100%!important}.admin-topbar{padding:0 15px!important}.admin-content,.admin-content.result-page{padding:18px 14px!important}}

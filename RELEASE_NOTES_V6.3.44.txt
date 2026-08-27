@@ -1,0 +1,5 @@
+V6.3.44 — Emergency PHP Rendering Hotfix
+- Fixes raw PHP helper text appearing in the browser.
+- Fixes undefined participant_display_name() without depending on partial config updates.
+- Helper declarations are correctly placed inside the PHP execution block after config loading.
+- Applies to Dashboard, Results and Participants.

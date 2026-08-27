@@ -1,0 +1,7 @@
+V6.3.54 — Unified Admin Button UI
+- Added a global UI button system for consistent modern buttons.
+- Primary actions use a solid blue style with hover and focus states.
+- Secondary/cancel actions use a neutral outline style.
+- Import and template actions use softer secondary variants.
+- Normalized button height, padding, radius, typography and spacing.
+- Added responsive wrapping for action toolbars and modal actions.

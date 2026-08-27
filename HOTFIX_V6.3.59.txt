@@ -1,0 +1,9 @@
+V6.3.59 HOTFIX
+Fixes the fatal error:
+Call to undefined function public_url()
+
+Changes:
+1. public_base_url() and public_url() are now defined in config.php.
+2. admin/index.php and peserta/access.php include a defensive fallback if an old config.php is accidentally used.
+3. No database migration is required for this hotfix.
+4. All PHP files were syntax-checked before packaging.

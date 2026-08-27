@@ -1,0 +1,4 @@
+V6.3.47 — Matrix Schema Function Load Fix
+- Restored ensure_matrix_disc_schema() directly in config.php.
+- Questions and save_question pages now guard against a missing helper instead of producing an undefined-function fatal error.
+- Schema synchronization remains automatic for questions.type, matrix_correct_mirip, matrix_correct_tidak and answers.matrix_answer.

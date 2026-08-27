@@ -1,0 +1,10 @@
+V6.3.60 - Public verification flow fix
+
+- Fixed contradictory email success/failure messages.
+- Success message is shown only when mail() returns success.
+- Added fallback verification URL when email delivery fails.
+- Added Open Verification Link and Copy Link actions.
+- Public URLs now support Cloudflare Tunnel/current host automatically.
+- Added optional PUBLIC_BASE_URL server environment override.
+- Removed duplicate exam query parameter generation.
+- Preserved mobile-friendly participant flow.

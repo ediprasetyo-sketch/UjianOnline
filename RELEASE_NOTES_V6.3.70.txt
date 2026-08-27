@@ -1,0 +1,10 @@
+WebTestOnline Update V6.3.70
+
+Perbaikan hasil/detail attempt soal Matriks / DISC:
+- Menghapus tampilan "Kunci" untuk MIRIP.
+- Menghapus tampilan "Kunci" untuk TIDAK MIRIP.
+- Hasil hanya menampilkan pilihan peserta.
+- Soal pilihan biasa dan essay tidak berubah.
+
+File utama:
+- admin/results.php

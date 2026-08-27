@@ -1,0 +1,5 @@
+V6.3.39 — Participant Auto Exit After Submit
+- After submit or time expiry, participant is redirected to peserta/finish.php.
+- Participant session and public exam context are cleared automatically on completion.
+- Completion page shows exam and participant summary without redirecting to Admin Dashboard.
+- No database schema changes.

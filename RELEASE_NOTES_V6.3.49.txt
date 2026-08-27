@@ -1,0 +1,5 @@
+V6.3.49 — Matrix/DISC Participant UI Cleanup
+- Removed duplicate A, B, C, D option cards rendered below the MIRIP/TIDAK MIRIP matrix.
+- Removed redundant matrix instruction heading so the participant layout matches the approved compact reference.
+- The participant now sees one Matrix/DISC answer grid only: column A-D, row MIRIP, row TIDAK MIRIP.
+- Existing answer saving and validation remain unchanged.

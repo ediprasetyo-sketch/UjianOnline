@@ -1,0 +1,7 @@
+V6.3.38 — Participant Name After Verification
+- Added participant name step immediately after successful email verification.
+- Name is required before entering the exam.
+- Name is stored in users.full_name and participant session.
+- Attempt, monitoring and results can use the stored participant name.
+- Existing users can update a placeholder name that was previously set to their email.
+- No database schema change required.

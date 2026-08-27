@@ -1,0 +1,11 @@
+WEB TEST ONLINE - UPDATE V6.3.66
+
+Perubahan:
+- Menghapus tampilan "Kunci admin" pada Preview Admin untuk jenis soal Matriks / DISC.
+- Kunci MIRIP dan TIDAK MIRIP tetap digunakan secara internal untuk penilaian.
+- Tampilan peserta tidak menampilkan informasi kunci.
+- Mode Semua Sekaligus dan Satu per Satu dari V6.3.65 tetap dipertahankan.
+- Paket tidak menyertakan config.php, .env, uploads, storage, backup, atau .git.
+
+Catatan:
+Setelah instalasi, refresh browser dengan Ctrl+F5 dan cek versi aplikasi menjadi 6.3.66.

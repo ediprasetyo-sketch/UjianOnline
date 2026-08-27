@@ -1,0 +1,7 @@
+V6.3.34 — Participant Session Isolation
+- Participant identity now uses a dedicated session key, separate from administrator login.
+- Testing a public exam link no longer replaces the admin account.
+- Public exam access no longer silently reuses a participant context from a different exam.
+- API authentication now validates the isolated participant session.
+- Added participant-only logout.
+- Existing attempt ownership remains bound to the verified participant user ID.

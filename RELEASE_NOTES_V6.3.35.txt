@@ -1,0 +1,6 @@
+V6.3.35 — Participant Session Hotfix
+- Fixes fatal undefined function participant_session().
+- Participant session functions moved to includes/participant_session.php.
+- Participant pages and API common explicitly load the helper.
+- function_exists guards preserve compatibility with older config.php copies.
+- No database schema change required.

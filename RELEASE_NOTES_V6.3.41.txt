@@ -1,0 +1,6 @@
+V6.3.41 — Participant Identity in Dashboard
+- Dashboard Monitoring now displays participant full name and email together.
+- Recent Activity now displays participant name and email together.
+- Monitoring refresh endpoint includes participant email, so automatic refresh preserves the new layout.
+- Attempt statuses are rendered as human-readable badges: Selesai, Waktu Habis, Sedang Mengerjakan.
+- Improved participant cell alignment and responsive wrapping.

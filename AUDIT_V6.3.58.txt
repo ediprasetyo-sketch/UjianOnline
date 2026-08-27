@@ -1,0 +1,11 @@
+AUDIT & STABILIZATION V6.3.58
+Baseline: user-provided project ZIP.
+PHP syntax: checked for all PHP files.
+Fixes:
+- public_url/public_base_url centralized in config.php.
+- verification URL uses the same public URL generator.
+- LAN hostname/IP fallback for localhost links when a usable server IP is available.
+- responsive baseline applied to participant flow.
+- mobile exam controls, touch targets, navigation and matrix overflow improved.
+- responsive fallback and button/table polish applied to admin UI.
+Recommended after installation: open /health.php and then test Admin, public link, verification, start, save answer, submit and finish.

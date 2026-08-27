@@ -1,0 +1,14 @@
+config.local.php
+.env
+.env.*
+*.log
+storage/
+uploads/
+releases/
+*.zip
+*.sql.gz
+*.bak
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

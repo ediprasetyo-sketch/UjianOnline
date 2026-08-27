@@ -1,0 +1,8 @@
+V6.3.26 — Stabilization & Release Integrity
+- Centralized application version through VERSION.txt and app_version().
+- Removed APP_VERSION dependency from Update System.
+- Added migration tracking via schema_migrations and checksum validation.
+- Participant access POST protected with CSRF token.
+- Runtime directories excluded from clean release content.
+- Update process preserves config.php, storage, and uploads.
+- Health/version metadata synchronized to centralized version source.

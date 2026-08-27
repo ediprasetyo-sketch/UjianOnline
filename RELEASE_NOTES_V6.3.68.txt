@@ -1,0 +1,8 @@
+WEB TEST ONLINE - UPDATE V6.3.68
+
+FIX MATRIKS / DISC:
+- Menghilangkan duplikasi teks A-D.
+- Memperbaiki opsi A-D kosong pada data soal lama.
+- Mendukung option_a/option_b/option_c/option_d.
+- Mendukung soal lama dengan A-D tersimpan menyatu di question_text.
+- Preview Admin dan halaman peserta menggunakan fallback data yang sama.

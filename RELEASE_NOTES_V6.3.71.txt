@@ -1,0 +1,6 @@
+V6.3.71
+- Tambah opsi Gunakan Kunci Jawaban & Poin.
+- Jika nonaktif, kunci dan poin tidak dipakai untuk penilaian.
+- Matriks/DISC otomatis tanpa kunci/poin.
+- Pilihan ganda fleksibel 2 sampai 8 opsi (A-H) saat membuat soal baru.
+- Tambah migration 6.3.71.sql.

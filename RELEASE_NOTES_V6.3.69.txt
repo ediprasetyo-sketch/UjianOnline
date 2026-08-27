@@ -1,0 +1,8 @@
+WEB TEST ONLINE - UPDATE V6.3.69
+
+FIX DUPLIKASI MATRIKS / DISC
+- Menghilangkan teks soal A-D yang tampil dua kali.
+- Jika question_text berisi pilihan A-D format lama, teks tersebut hanya dipakai sebagai sumber opsi.
+- A-D ditampilkan satu kali dalam daftar opsi.
+- Tabel MIRIP / TIDAK MIRIP tetap berada di bawah.
+- Berlaku pada mode Satu per Satu, Semua Sekaligus, dan Preview Admin.

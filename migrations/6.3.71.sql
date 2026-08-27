@@ -1,0 +1,7 @@
+-- V6.3.71 flexible options and optional grading
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS option_e TEXT NULL;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS option_f TEXT NULL;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS option_g TEXT NULL;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS option_h TEXT NULL;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS use_answer_key TINYINT(1) NOT NULL DEFAULT 1;
+ALTER TABLE questions MODIFY correct_option VARCHAR(8) NULL;

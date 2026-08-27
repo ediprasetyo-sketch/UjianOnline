@@ -1,0 +1,5 @@
+V6.3.50 — Matrix/DISC Preview Render Fix
+- Audited the active project uploaded after V6.3.49.
+- Removed duplicate A/B/C/D option cards from admin/preview.php only for Matrix/DISC.
+- Root cause: participant rendering was already clean; the duplicate cards came from the Admin Preview Matrix/DISC branch.
+- Admin preview now shows question text, A-D descriptions, the MIRIP/TIDAK MIRIP matrix, then the admin key.

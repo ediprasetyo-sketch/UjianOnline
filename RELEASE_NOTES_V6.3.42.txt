@@ -1,0 +1,5 @@
+V6.3.42 — Participant Identity Synchronization
+- Added shared participant identity formatter.
+- Empty names and legacy names equal to email no longer duplicate the email.
+- Synchronized Dashboard, live monitoring, recent activity, results/attempt list and participant management.
+- API monitoring payload now consistently includes email for recent attempt data.

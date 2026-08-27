@@ -1,0 +1,8 @@
+V6.3.40 — Matrix / DISC Question Type
+- Added native matrix_disc question type.
+- Supports A-D options with MIRIP and TIDAK MIRIP answer rows.
+- Both rows are saved independently in matrix_answer JSON.
+- Added separate answer keys for MIRIP and TIDAK MIRIP.
+- Scoring awards half of the configured points for each correct row.
+- Added admin creation UI, participant renderer, preview and result detail support.
+- Migration 006 upgrades existing questions.type and answers schema automatically.

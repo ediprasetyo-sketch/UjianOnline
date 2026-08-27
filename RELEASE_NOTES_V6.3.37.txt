@@ -1,0 +1,6 @@
+V6.3.37 — Exam Management UI Polish
+- Rebuilt Ujian Terbaru into a clearer exam management table.
+- Improved column widths, schedule hierarchy, metrics, status and action grouping.
+- Added exam metadata and structured schedule display.
+- Mobile layout now transforms each exam into a readable card instead of compressing the table.
+- Existing action routes and delete confirmation remain unchanged.

@@ -1,0 +1,6 @@
+V6.3.55 — Public Link Test
+- Added Test Link on Dashboard Admin for each recent exam.
+- Added Test Public Link button on the dedicated exam link page.
+- Test link opens the public participant flow in a new tab.
+- Admin-authenticated test mode displays a clear MODE TEST ADMIN indicator.
+- Public link and Salin Link remain unchanged for actual participants.

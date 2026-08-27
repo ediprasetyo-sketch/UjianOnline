@@ -1,0 +1,6 @@
+V6.3.53 — Dashboard Direct Copy Link
+- Added Salin Link directly to Dashboard Admin > Ujian Terbaru.
+- Dashboard automatically creates a missing public token for an exam.
+- Added Buka to open the participant link in a new tab.
+- Existing Detail Link page remains available.
+- Copy uses Clipboard API with a browser fallback and visible success feedback.

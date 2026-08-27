@@ -1,0 +1,6 @@
+V6.3.46 — Matrix/DISC Automatic Schema Fix
+- Forces idempotent Matrix/DISC schema repair when opening Kelola Soal and when saving a question.
+- Ensures questions.type accepts matrix_disc.
+- Adds missing matrix_correct_mirip and matrix_correct_tidak columns automatically.
+- Adds missing answers.matrix_answer column automatically.
+- Avoids stale migration bookkeeping causing the form to exist while the schema is incomplete.

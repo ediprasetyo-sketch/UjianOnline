@@ -1,0 +1,5 @@
+V6.3.36 — Exam Link Recovery
+- access.php recovers the current exam token from participant session when the query string is missing.
+- Verification links now preserve the exam token explicitly.
+- Missing or invalid exam links display a friendly page instead of raw exit text.
+- No database schema changes.

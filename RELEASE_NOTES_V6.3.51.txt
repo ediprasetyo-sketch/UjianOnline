@@ -1,0 +1,6 @@
+V6.3.51 — Matrix/DISC Answer Key Cleanup
+- Standard Kunci Jawaban is hidden automatically when type is matrix_disc.
+- Matrix/DISC displays only Kunci MIRIP and Kunci TIDAK MIRIP.
+- Switching question types updates the form immediately without reload.
+- Server-side save logic ignores standard correct_option for matrix_disc.
+- Versioning synchronized to 6.3.51.

@@ -1,0 +1,6 @@
+V6.3.30 — Monitoring UI Fix
+- Fixed broken Monitoring Ujian card/grid layout.
+- Added dedicated monitoring stylesheet isolated from general admin UI.
+- Added versioned CSS URLs to prevent stale browser cache after ZIP updates.
+- Restored spacing, vertical statistic layout, live exam rows and responsive behavior.
+- Monitoring data logic remains unchanged.

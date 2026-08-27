@@ -1,0 +1,12 @@
+UJIAN ONLINE V6.3.78 – FULL UI AUDIT
+
+Perbaikan dan normalisasi UI:
+- Dashboard Admin dijadikan baseline tampilan.
+- Standarisasi topbar, profil, avatar, judul halaman, subtitle dan breadcrumb.
+- Penyamaan lebar konten, spacing, card radius dan tabel.
+- Penyamaan perilaku tombol, toolbar, aksi tabel dan modal.
+- Normalisasi responsive desktop/tablet/mobile.
+- CSS audit global ditambahkan sebagai dasar penyamaan halaman admin.
+
+Catatan:
+Audit dilanjutkan pada halaman-halaman yang memakai stylesheet khusus agar seluruh halaman mengikuti baseline yang sama.

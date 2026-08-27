@@ -1,0 +1,7 @@
+V6.3.27 — Results, Attempt, Preview & Admin Flow
+- Results dashboard with attempt summary, search and export access.
+- Attempt detail view with answer review.
+- Essay grading integrated with score recalculation.
+- Reset attempt action retained with CSRF confirmation.
+- Preview supports one-by-one question simulation based on exam mode.
+- Admin navigation links connect edit, questions, preview, link and results.

@@ -1,0 +1,5 @@
+<?php
+declare(strict_types=1);require __DIR__.'/../config.php';require_login('admin');$id=(int)($_GET['id']??0);
+$s=db();
+$q=$s->prepare("SELECT e.title AS ujian,u.full_name AS peserta,u.email AS email,a.id AS attempt_id,a.started_at AS mulai,a.submitted_at AS selesai,a.status,a.score AS nilai,q.id AS question_id,q.type AS tipe_soal,q.question_text AS pertanyaan,q.points AS poin,q.correct_option AS kunci_pg,q.essay_answer_key AS jawaban_acuan,a2.selected_option AS jawaban_pg,a2.essay_answer AS jawaban_essay,a2.essay_score AS nilai_essay FROM attempts a JOIN users u ON u.id=a.user_id JOIN exams e ON e.id=a.exam_id JOIN questions q ON q.exam_id=a.exam_id LEFT JOIN answers a2 ON a2.attempt_id=a.id AND a2.question_id=q.id WHERE a.exam_id=? ORDER BY a.id,q.sort_order,q.id");$q->execute([$id]);$rows=$q->fetchAll();
+header('Content-Type:text/csv;charset=utf-8');header('Content-Disposition:attachment; filename="hasil-jawaban-ujian-'.$id.'.csv"');$out=fopen('php://output','w');fwrite($out,"\xEF\xBB\xBF");if($rows)fputcsv($out,array_keys($rows[0]));foreach($rows as $r)fputcsv($out,$r);fclose($out);exit;

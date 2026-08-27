@@ -1,0 +1,6 @@
+V6.3.33 — Monitoring Consistency Fix
+- Fixed server-rendered live exam counts to use only status=active.
+- Fixed server-rendered Peserta Sedang Mengerjakan list to use only status=active.
+- Fixed duplicate/misplaced watchAttemptTable ID so AJAX updates target the active-attempt table.
+- Dashboard first render and automatic monitoring now use the same active attempt definition.
+- Expired, submitted and finished attempts cannot remain visible in the active participant list.

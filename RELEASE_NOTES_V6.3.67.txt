@@ -1,0 +1,8 @@
+WEB TEST ONLINE - UPDATE V6.3.67
+
+Perbaikan Matriks / DISC:
+- Pilihan A, B, C, D ditampilkan terpisah dan rapi.
+- Tabel MIRIP / TIDAK MIRIP berada di bawah pilihan.
+- Preview Admin dan halaman ujian menggunakan urutan visual yang sama.
+- Tidak ada tampilan Kunci Admin untuk Matriks/DISC.
+- Berlaku untuk mode Satu per Satu dan Semua Sekaligus.

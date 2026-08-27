@@ -1,0 +1,8 @@
+V6.3.31 — Attempt Status Synchronization
+- Active attempts are synchronized against the effective exam deadline.
+- Effective deadline uses the earlier of attempt start + exam duration and exam end time.
+- Expired attempts automatically change to status expired.
+- Expired attempts are excluded from live participant monitoring.
+- Dashboard and monitoring endpoint synchronize before reading statistics.
+- Results page now separates Selesai, Waktu Habis, and Sedang Mengerjakan.
+- Legacy incorrect deadline_at values are normalized during synchronization.

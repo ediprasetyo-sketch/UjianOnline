@@ -1,0 +1,5 @@
+V6.3.43 — Hotfix Undefined participant_display_name()
+- Fixed fatal error in admin/index.php.
+- Participant identity helper is now guarded and available directly in admin pages.
+- Prevents partial ZIP updates from breaking Dashboard, Results and Participants.
+- Keeps name + email display synchronization from V6.3.42.

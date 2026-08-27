@@ -1,0 +1,12 @@
+UJIAN ONLINE V6.3.76
+
+Fokus update:
+- Menyamakan UI Hasil Ujian dengan desain Admin UI.
+- Merapikan 5 kartu statistik.
+- Merapikan Daftar Attempt, pencarian peserta, status, dan tombol aksi.
+- Merapikan tampilan Detail Attempt.
+- Menambahkan stylesheet khusus results-v6376.css.
+
+Instalasi:
+Admin > Update Sistem > pilih paket ZIP V6.3.76 > Upload & Install Update.
+Sistem akan membuat backup otomatis sebelum perubahan diterapkan.

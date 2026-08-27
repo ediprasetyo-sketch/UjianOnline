@@ -1,0 +1,12 @@
+{
+  "version": "6.3.86",
+  "release": "V6.3.86 Full UI and Essay Repair",
+  "changelog": [
+    "Menyatukan perbaikan UI Kelola Soal dan Hasil Ujian melalui stylesheet bersama.",
+    "Memperbaiki responsivitas panel Tambah Soal, daftar soal, detail attempt, dan penilaian essay.",
+    "Memastikan penyimpanan soal essay selalu menyimpan poin minimal 1 dan jawaban acuan.",
+    "Memisahkan perbaikan UI dari patch CSS lama agar cache versi sebelumnya tidak dipakai kembali.",
+    "Paket wajib dibangun ulang dari source ini sehingga VERSION.txt dan manifest sama-sama 6.3.86."
+  ],
+  "notes": "Build dari root repository dengan tools/build-update.ps1. Sebelum upload, pastikan ZIP berisi VERSION.txt, update-manifest.json, admin/update.php, dan file aplikasi terbaru."
+}

@@ -1,0 +1,6 @@
+WebTestOnline V6.3.72
+HOTFIX DATABASE SCHEMA
+- Adds option_e, option_f, option_g, option_h automatically on older databases.
+- Adds use_answer_key automatically when missing.
+- Prevents SQLSTATE 42S22 Unknown column option_e when saving flexible MCQ.
+- Schema synchronization runs idempotently before saving questions.

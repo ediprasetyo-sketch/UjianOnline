@@ -1,0 +1,8 @@
+V6.3.56 — Public Link Generator + Mobile Participant
+- Added centralized public URL generator.
+- PUBLIC_BASE_URL can be configured for a real domain.
+- When accessed through localhost, generator prefers a reachable server/LAN IP when available.
+- Dashboard and Detail Link use the centralized generator.
+- Added public-link network usage guidance.
+- Improved participant access, verification, finish and exam pages for phones.
+- Larger touch targets, responsive cards, sticky mobile navigation and horizontally scrollable Matrix/DISC table.

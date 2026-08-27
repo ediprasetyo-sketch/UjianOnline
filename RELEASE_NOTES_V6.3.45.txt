@@ -1,0 +1,5 @@
+V6.3.45 — Matrix/DISC Schema Repair Hotfix
+- Repairs missing matrix_correct_mirip and matrix_correct_tidak columns automatically.
+- Repairs missing answers.matrix_answer column automatically.
+- Keeps normal MCQ and Essay saving compatible with legacy schemas.
+- Prevents SQL error 1054 when saving questions after partial updates.

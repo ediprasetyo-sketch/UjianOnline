@@ -1,0 +1,6 @@
+V6.3.32 — Attempt Status Sync Hotfix
+- Fixes fatal undefined function sync_attempt_statuses().
+- Synchronization function moved to an explicit shared helper.
+- Admin dashboard, monitoring endpoint, results page and API common explicitly load the helper.
+- Uses function_exists guard for compatibility with installations where config.php already contains the previous implementation.
+- No schema change required.

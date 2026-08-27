@@ -1,23 +1,17 @@
 <?php
-require __DIR__.'/config.php';
-header('Content-Type: text/plain; charset=utf-8');
+declare(strict_types=1);
 
-$base = '/';
-if (function_exists('app_base')) {
-    $base = app_base();
-} else {
-    $docRoot = realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '';
-    $projectRoot = realpath(__DIR__) ?: __DIR__;
-    $docRoot = str_replace('\\','/',rtrim($docRoot,'/\\'));
-    $projectRoot = str_replace('\\','/',$projectRoot);
-    if ($docRoot !== '' && str_starts_with($projectRoot,$docRoot)) {
-        $base = str_replace('//','/',substr($projectRoot,strlen($docRoot)));
-        if ($base === '') $base='/';
-    }
+// Lightweight production health endpoint. It must fail when the runtime
+// configuration or database is unavailable so deployment smoke tests cannot
+// report a false positive.
+try {
+    require __DIR__ . '/config.php';
+    db()->query('SELECT 1');
+    http_response_code(200);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Ujian Online ' . app_version() . ' OK';
+} catch (Throwable $e) {
+    http_response_code(503);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Ujian Online HEALTHCHECK FAILED';
 }
-
-echo 'Ujian Online ' . app_version() . ' OK';
-echo 'Ujian Online ' . app_version() . ' OK';
-echo 'Ujian Online ' . app_version() . ' OK';
-try { db()->query('SELECT 1'); echo 'Ujian Online ' . app_version() . ' OK'; }
-catch (Throwable $e) { echo 'Ujian Online ' . app_version() . ' OK'; }

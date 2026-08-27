@@ -30,9 +30,14 @@ $sum->execute([$attemptId,(int)$row['exam_id']]);
 $total=(float)$sum->fetchColumn();
 db()->prepare('UPDATE attempts SET score=? WHERE id=?')->execute([$total,$attemptId]);
 
+$next=db()->prepare("SELECT q.id FROM questions q LEFT JOIN answers a ON a.question_id=q.id AND a.attempt_id=? WHERE q.exam_id=? AND q.type='essay' AND q.use_answer_key=1 AND q.points>0 AND a.essay_score IS NULL AND q.id<>? ORDER BY q.sort_order,q.id LIMIT 1");
+$next->execute([$attemptId,(int)$row['exam_id'],$questionId]);
+$nextId=(int)($next->fetchColumn()?:0);
+
 $returnTo=trim((string)($_POST['return_to']??''));
-if($returnTo!=='' && preg_match('/^(essay_grading\.php\?attempt_id=\d+(?:&saved=1)?)$/',$returnTo)){
-    header('Location: '.$returnTo);
+if($returnTo!=='' && preg_match('/^essay_grading\.php\?attempt_id=\d+$/',$returnTo)){
+    $location=$returnTo.'&saved=1'.($nextId>0?'&focus='.$nextId:'');
+    header('Location: '.$location);
 }else{
     header('Location: results.php?id='.(int)$row['exam_id'].'&attempt_id='.$attemptId.'&graded=1');
 }

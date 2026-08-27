@@ -1,0 +1,49 @@
+name: PHP Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: PHP syntax audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find . -type f -name '*.php' -not -path './.git/*')
+          for f in "${files[@]}"; do
+            php -l "$f" >/dev/null
+          done
+
+      - name: Runtime path audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --include='*.php' '(/volume1/web/ujian-online|require[[:space:]]*["'"']?/volume1|include[[:space:]]*["'"']?/volume1)' . \
+            --exclude-dir=.git --exclude='php_check.php'; then
+            echo 'Hard-coded production filesystem path found.'
+            exit 1
+          fi
+
+      - name: Secret/config guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -f config.local.php
+          test ! -f .env
+          test ! -f php_check.php

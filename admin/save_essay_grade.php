@@ -14,6 +14,13 @@ $s->execute([$attemptId,$questionId]);
 $row=$s->fetch();
 if(!$row||$row['type']!=='essay') exit('Soal essay tidak ditemukan.');
 
+$locked=db()->prepare("SELECT event_type FROM audit_logs WHERE attempt_id=? AND event_type IN ('essay_finalized','essay_reopened') ORDER BY id DESC LIMIT 1");
+$locked->execute([$attemptId]);
+if((string)($locked->fetchColumn()?:'')==='essay_finalized'){
+    http_response_code(409);
+    exit('Penilaian Essay sudah final. Buka kembali penilaian sebelum mengubah nilai.');
+}
+
 $useKey=(int)($row['use_answer_key']??0)===1;
 $max=$useKey?max(0,(float)$row['points']):0.0;
 

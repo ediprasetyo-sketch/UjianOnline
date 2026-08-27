@@ -10,13 +10,23 @@ $stmt->execute([$id]);
 $q=$stmt->fetch();
 if(!$q) exit('Soal tidak ditemukan.');
 $examId=(int)$q['exam_id'];
-// Remove dependent attempt/question records first, then answers, to keep old attempts consistent.
+
+// Never delete a question that is already part of an attempt. Past attempts
+// must remain reproducible and their answers/results must not be destroyed.
+$used=db()->prepare('SELECT COUNT(*) FROM attempt_questions WHERE question_id=?');
+$used->execute([$id]);
+if((int)$used->fetchColumn()>0){
+  header('Location: questions.php?id='.$examId.'&error='.rawurlencode('Soal tidak dapat dihapus karena sudah digunakan dalam ujian peserta. Nonaktifkan/arsipkan soal tersebut agar riwayat hasil tetap aman.'));
+  exit;
+}
+
 db()->beginTransaction();
 try{
-  db()->prepare('DELETE FROM answers WHERE question_id=?')->execute([$id]);
-  db()->prepare('DELETE FROM attempt_questions WHERE question_id=?')->execute([$id]);
-  db()->prepare('DELETE FROM questions WHERE id=?')->execute([$id]);
-  db()->commit();
-}catch(Throwable $e){db()->rollBack();exit('Gagal menghapus soal.');}
+  db()->prepare('DELETE FROM questions WHERE id=? AND exam_id=?')->execute([$id,$examId]);
+  if(db()->inTransaction()) db()->commit();
+}catch(Throwable $e){
+  if(db()->inTransaction()) db()->rollBack();
+  exit('Gagal menghapus soal.');
+}
 if(!empty($q['question_image']) && is_file(__DIR__.'/../'.$q['question_image'])) @unlink(__DIR__.'/../'.$q['question_image']);
 header('Location: questions.php?id='.$examId.'&deleted=1'); exit;

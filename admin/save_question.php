@@ -14,10 +14,9 @@ if(!$examId || $text==='') exit('Data soal tidak lengkap.');
 $requestedPoints=(float)($_POST['points']??1);
 
 if($type==='essay'){
-    $useKey=1;
-    $points=max(0,$requestedPoints);
-    if($points<=0) $points=1;
-    $essayKey=trim((string)($_POST['essay_answer_key']??''));
+    $useKey=isset($_POST['use_answer_key'])?1:0;
+    $points=$useKey?max(0,$requestedPoints):0;
+    $essayKey=$useKey?trim((string)($_POST['essay_answer_key']??'')):null;
 }elseif($type==='matrix_disc'){
     $useKey=0;$points=0;$essayKey=null;
 }else{

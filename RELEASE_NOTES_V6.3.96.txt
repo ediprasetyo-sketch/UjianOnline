@@ -1,0 +1,15 @@
+Ujian Online V6.3.96
+Production Recovery and Update Guard
+
+Perbaikan utama:
+- Root index.php dikembalikan sebagai entrypoint publik yang aman.
+- Tidak ada lagi ketergantungan pada path filesystem /volume1/web/ujian-online di source aplikasi.
+- VERSION.txt dan update-manifest.json disinkronkan ke 6.3.96.
+- Builder paket update sekarang menolak source yang tidak lengkap atau memiliki hard-coded production path.
+- Ditambahkan tools/production-repair.sh untuk sinkronisasi GitHub, permission, syntax, database, restart service, dan smoke test HTTP dalam satu eksekusi.
+- config.php produksi tetap tidak dimasukkan ke paket update; konfigurasi lokal tetap dipertahankan.
+
+Prosedur server:
+1. Jalankan `git fetch origin main` bila diperlukan untuk mengambil script terbaru.
+2. Jalankan `sh tools/production-repair.sh`.
+3. Script hanya menyatakan BERHASIL jika seluruh pemeriksaan lulus.

@@ -1,10 +1,12 @@
 {
-  "version": "6.3.98",
-  "release": "V6.3.98 Security Cache Hardening",
+  "version": "6.3.99",
+  "release": "V6.3.99 Deep Audit Integrity Hardening",
   "changelog": [
-    "Menambahkan Cache-Control no-store/no-cache dan Pragma no-cache pada seluruh runtime aplikasi untuk mencegah browser/proxy menyimpan halaman ujian, jawaban, dan data peserta.",
-    "Mempertahankan konfigurasi session dan security headers yang sudah ada.",
-    "VERSION.txt dan update-manifest.json disinkronkan ke versi 6.3.98."
+    "Mencegah penghapusan soal yang sudah digunakan pada attempt peserta agar jawaban dan riwayat hasil tidak rusak.",
+    "Mencegah penghapusan ujian yang sudah memiliki attempt peserta; ujian bersejarah harus dinonaktifkan, bukan dihapus.",
+    "API exam sekarang memeriksa deadline server sebelum mengembalikan paket soal aktif.",
+    "Mempertahankan hardening cache V6.3.98.",
+    "VERSION.txt dan update-manifest.json disinkronkan ke versi 6.3.99."
   ],
   "notes": "Build paket hanya dari source repository ini. Jangan menyalin config.php produksi atau membuat ZIP dari folder produksi lama."
 }

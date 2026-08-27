@@ -1,12 +1,12 @@
 {
-  "version": "6.3.86",
-  "release": "V6.3.86 Full UI and Essay Repair",
+  "version": "6.3.96",
+  "release": "V6.3.96 Production Recovery and Update Guard",
   "changelog": [
-    "Menyatukan perbaikan UI Kelola Soal dan Hasil Ujian melalui stylesheet bersama.",
-    "Memperbaiki responsivitas panel Tambah Soal, daftar soal, detail attempt, dan penilaian essay.",
-    "Memastikan penyimpanan soal essay selalu menyimpan poin minimal 1 dan jawaban acuan.",
-    "Memisahkan perbaikan UI dari patch CSS lama agar cache versi sebelumnya tidak dipakai kembali.",
-    "Paket wajib dibangun ulang dari source ini sehingga VERSION.txt dan manifest sama-sama 6.3.86."
+    "Menambahkan root index.php yang aman dan bebas hard-coded filesystem path.",
+    "Memperketat validasi paket update agar entrypoint utama wajib ada sebelum instalasi.",
+    "Menyinkronkan VERSION.txt dan update-manifest.json ke versi 6.3.96.",
+    "Menambahkan pemeriksaan konfigurasi, syntax PHP, runtime path, dan smoke test sebagai bagian dari doctor production.",
+    "Paket update tidak membawa config.php produksi sehingga kredensial database tetap dipertahankan."
   ],
-  "notes": "Build dari root repository dengan tools/build-update.ps1. Sebelum upload, pastikan ZIP berisi VERSION.txt, update-manifest.json, admin/update.php, dan file aplikasi terbaru."
+  "notes": "Bangun paket dari source repository ini. Jangan membuat ZIP manual dari folder lama. Pastikan VERSION.txt, update-manifest.json, index.php, login.php, admin/update.php, dan folder aplikasi ikut masuk paket."
 }

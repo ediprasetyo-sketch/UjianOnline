@@ -35,7 +35,8 @@ header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
 if ($isHttps) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 
 function public_base_url(): string {
-    $configured = trim((string)(getenv('PUBLIC_BASE_URL') ?: ''));
+    global $localConfig;
+    $configured = trim((string)(getenv('PUBLIC_BASE_URL') ?: ($localConfig['public_base_url'] ?? '')));
     if ($configured !== '') return rtrim($configured, '/');
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
@@ -68,13 +69,10 @@ function app_base_path(): string {
 }
 function app_url(string $path=''): string { return app_base_path() . '/' . ltrim($path, '/'); }
 function require_login(string $role): void {
-    if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? null) !== $role) {
-        header('Location: '.app_url('login.php')); exit;
-    }
+    if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? null) !== $role) { header('Location: '.app_url('login.php')); exit; }
 }
 function json_response(array $data, int $status=200): never {
-    http_response_code($status); header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($data); exit;
+    http_response_code($status); header('Content-Type: application/json; charset=utf-8'); echo json_encode($data); exit;
 }
 function app_version(): string {
     static $version=null; if($version!==null)return $version;

@@ -22,6 +22,11 @@ require_login('admin');
 
 $pdo=db();
 $users=$pdo->query("SELECT id,full_name,username,participant_code,created_at FROM users WHERE role='participant' ORDER BY id DESC")->fetchAll();
+$versionFile = __DIR__.'/../VERSION.txt';
+$appVersion = trim((string)@file_get_contents($versionFile));
+if ($appVersion === '') {
+    $appVersion = '6.3.99';
+}
 function h($v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 ?><!doctype html><html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -33,7 +38,7 @@ function h($v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 <a href="index.php"><span class="ico">⌂</span>Dashboard</a><a href="index.php#ujian-list"><span class="ico">▣</span>Ujian</a>
 <a class="active" href="participants.php"><span class="ico">♟</span>Peserta</a><a href="templates.php"><span class="ico">⇩</span>Template Import Soal</a>
 </nav><div class="admin-section">SISTEM</div><nav class="admin-nav"><a href="update.php"><span class="ico">↻</span>Update Sistem</a></nav>
-<div class="system-box"><h4>Informasi Sistem</h4><div class="system-row"><span>Versi Aplikasi</span><span class="version-chip"><?=h(trim(@file_get_contents(__DIR__.'/../VERSION.txt')) ?: '<?=app_version()?>')?></span></div>
+<div class="system-box"><h4>Informasi Sistem</h4><div class="system-row"><span>Versi Aplikasi</span><span class="version-chip"><?=h($appVersion)?></span></div>
 <div class="system-row"><span>Total Peserta</span><b><?=count($users)?></b></div><div class="system-row"><span>Environment</span><span class="prod-chip">Production</span></div></div>
 </aside>
 
@@ -64,7 +69,7 @@ function h($v):string{return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 </tr><?php endforeach;?>
 <tr id="noParticipantRow" <?=count($users)?'style="display:none"':''?>><td colspan="6"><div class="empty"><span class="info-i">i</span><div><b>Peserta tidak ditemukan.</b><br><span class="ui-sub">Coba ubah kata kunci pencarian.</span></div></div></td></tr>
 </tbody></table></div></section>
-</div><footer class="admin-footer"><span>© <?=date('Y')?> Ujian Online. All rights reserved.</span><span>Versi <?=h(trim(@file_get_contents(__DIR__.'/../VERSION.txt')) ?: '<?=app_version()?>')?></span></footer></main></div>
+</div><footer class="admin-footer"><span>© <?=date('Y')?> Ujian Online. All rights reserved.</span><span>Versi <?=h($appVersion)?></span></footer></main></div>
 
 <div class="modal" id="participantModal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><div class="modal-card participant-modal"><button class="modal-close" type="button" data-close-modal>×</button>
 <h2 id="participantModalTitle">Tambah Peserta</h2><p class="ui-sub">Isi data peserta. Password dapat diubah saat proses edit.</p>

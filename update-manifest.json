@@ -1,11 +1,13 @@
 {
-  "version": "6.3.97",
-  "release": "V6.3.97 Session Bootstrap and Production Gate Fix",
+  "version": "6.3.99",
+  "release": "V6.3.99 Exam Integrity Hardening",
   "changelog": [
-    "Menghapus session_start() ganda dari peserta/index.php karena config.php sudah menjadi pemilik inisialisasi session.",
-    "Memastikan release gate menolak source yang menjalankan session_start() sebelum config.php.",
-    "Smoke test production tetap wajib melewati PHP-FPM, database, Nginx, HTTPS/public host, dan active exam link sebelum update dinyatakan berhasil.",
-    "VERSION.txt dan update-manifest.json disinkronkan ke versi 6.3.97."
+    "Menambahkan immutable scoring snapshot pada setiap attempt.",
+    "Scoring dan auto-grade essay sekarang menggunakan snapshot saat attempt dimulai.",
+    "Serialisasi start attempt dengan MySQL advisory lock untuk mencegah duplicate concurrent attempt.",
+    "Mencegah penghapusan soal/ujian yang sudah memiliki histori peserta.",
+    "API exam memeriksa deadline server sebelum mengembalikan paket soal.",
+    "Mempertahankan hardening cache V6.3.98."
   ],
   "notes": "Build paket hanya dari source repository ini. Jangan menyalin config.php produksi atau membuat ZIP dari folder produksi lama."
 }

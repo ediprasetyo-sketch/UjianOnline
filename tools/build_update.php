@@ -33,14 +33,18 @@ if (!is_array($manifest) || trim((string)($manifest['version'] ?? '')) !== $vers
     exit("update-manifest.json tidak sinkron dengan VERSION.txt.\n");
 }
 
-// Never allow deployment-specific filesystem paths into the package source.
-$itLint = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+// Deployment-specific paths are forbidden in application source. The audit tool
+// itself is allowed to mention the production path because it needs to detect it.
+$deploymentPath = '/volume1/web/' . 'ujian-online';
+$itLint = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
+);
 foreach ($itLint as $file) {
     if (!$file->isFile() || strtolower($file->getExtension()) !== 'php') continue;
     $rel = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
-    if (str_starts_with($rel, 'storage/') || str_starts_with($rel, 'releases/') || str_starts_with($rel, '.git/')) continue;
+    if (str_starts_with($rel, 'storage/') || str_starts_with($rel, 'releases/') || str_starts_with($rel, '.git/') || str_starts_with($rel, 'tools/')) continue;
     $src = (string)file_get_contents($file->getPathname());
-    if (str_contains($src, '/volume1/web/ujian-online')) {
+    if (str_contains($src, $deploymentPath)) {
         exit("HARD-CODED PATH ditemukan pada {$rel}. Paket dibatalkan.\n");
     }
 }
@@ -51,7 +55,7 @@ $out = $outDir . '/ujian-online-v' . $version . '-update.zip';
 
 function excluded_release_path(string $rel): bool {
     $rel = str_replace('\\', '/', $rel);
-    $prefixes = ['storage/', 'uploads/', 'release/', 'releases/', '.git/', 'node_modules/'];
+    $prefixes = ['storage/', 'uploads/', 'release/', 'releases/', '.git/', 'node_modules/', 'tools/'];
     foreach ($prefixes as $prefix) if (str_starts_with($rel, $prefix)) return true;
     return in_array($rel, ['config.php'], true) || str_ends_with(strtolower($rel), '.zip');
 }

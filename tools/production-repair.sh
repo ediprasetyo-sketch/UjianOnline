@@ -19,12 +19,15 @@ LOG="/tmp/ujian-online-final-$TS.log"
 LOCK="$ROOT/.production-release.lock"
 BEFORE=""
 TARGET=""
+DEPLOYED=0
+ROLLBACK_DONE=0
 
 say(){ printf '\n[%s] %s\n' "$1" "$2" | tee -a "$LOG"; }
-die(){ printf '\n==================================================\n FINAL RESULT : GAGAL\n==================================================\n%s\nLOG=%s\n' "$1" "$LOG" | tee -a "$LOG"; exit 1; }
+die(){ if [ "$DEPLOYED" -eq 1 ] && [ "$ROLLBACK_DONE" -eq 0 ]; then rollback; ROLLBACK_DONE=1; DEPLOYED=0; fi; printf '\n==================================================\n FINAL RESULT : GAGAL\n==================================================\n%s\nLOG=%s\n' "$1" "$LOG" | tee -a "$LOG"; exit 1; }
 cleanup(){ rm -rf "$STAGE"; rm -f "$LOCK"; }
 
 rollback(){
+  ROLLBACK_DONE=1
   set +e
   if [ -n "$BEFORE" ] && [ -d "$ROOT/.git" ]; then git reset --hard "$BEFORE" >/dev/null 2>&1; fi
   if [ -f "$BACKUP/config.local.php" ]; then cp -p "$BACKUP/config.local.php" "$ROOT/config.local.php"; fi
@@ -113,6 +116,8 @@ printf 'PHP files checked: %s\n' "$PHP_COUNT" | tee -a "$LOG"
 
 say "5/10" "DEPLOY EXACT COMMIT + PRESERVE LOCAL CONFIG"
 git reset --hard "$TARGET" >/dev/null
+git clean -fd -e config.local.php -e storage/ -e uploads/ -e "_backup_final_*" -e .production-release.lock >/dev/null 2>&1 || true
+DEPLOYED=1
 if [ -f "$BACKUP/config.local.php" ]; then cp -p "$BACKUP/config.local.php" "$ROOT/config.local.php"; else say "WARN" "config.local.php tidak ada; DB_* environment harus tersedia."; fi
 
 find "$ROOT" -type d ! -path "$ROOT/.git*" -exec chmod 755 {} + 2>/dev/null || true

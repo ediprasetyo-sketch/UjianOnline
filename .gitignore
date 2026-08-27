@@ -1,4 +1,6 @@
 config.local.php
+.user.ini
+php_check.php
 .env
 .env.*
 *.log

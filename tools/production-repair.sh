@@ -33,6 +33,12 @@ for f in config.php index.php login.php logout.php VERSION.txt update-manifest.j
   [ -f "$ROOT/$f" ] || fail "FILE WAJIB TIDAK ADA: $f"
 done
 
+# The root entrypoint must load config from the project root. Nested folders
+# may legitimately use ../config.php, but root/*.php must never do so.
+if grep -nE "require(_once)?[[:space:]]+__DIR__[[:space:]]*\.[[:space:]]*['\"]/?\.\./config\.php" "$ROOT"/*.php 2>/dev/null; then
+  fail "Root PHP masih memakai ../config.php. Entry point root harus memakai __DIR__ . '/config.php'."
+fi
+
 say 4 "PERMISSION + PATH GUARD"
 FPM_USER="$(ps -eo user=,args= 2>/dev/null | awk '/php-fpm: pool/{print $1; exit}')"
 FPM_GROUP="$(ps -eo group=,args= 2>/dev/null | awk '/php-fpm: pool/{print $1; exit}')"
@@ -112,4 +118,4 @@ printf '%s\n' '============================================'
 printf 'VERSION='; cat "$ROOT/VERSION.txt"
 printf 'COMMIT='; git rev-parse --short HEAD
 printf 'Backup=%s\n' "$BACKUP"
-echo 'Semua file wajib ada, path bersih, syntax OK, DB OK, PHP-FPM/Nginx OK, dan smoke test HTTP = 200.'
+echo 'Semua file wajib ada, root path benar, path deployment bersih, syntax OK, DB OK, PHP-FPM/Nginx OK, dan smoke test HTTP = 200.'

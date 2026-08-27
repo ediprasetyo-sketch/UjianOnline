@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__.'/config.php';
+require_once __DIR__.'/includes/login_rate_limit.php';
 
 $adminCount = (int)db()->query("SELECT COUNT(*) FROM users WHERE role='admin'")->fetchColumn();
 if (!empty($_SESSION['user']) && $adminCount > 0) { header('Location: admin/index.php'); exit; }
@@ -36,14 +37,21 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     } elseif (!$setupMode) {
         $loginName=trim((string)($_POST['login']??''));
         $password=(string)($_POST['password']??'');
-        $s=db()->prepare("SELECT * FROM users WHERE username=? AND role='admin' LIMIT 1");
-        $s->execute([$loginName]); $u=$s->fetch();
-        if ($u && password_verify($password,(string)$u['password_hash'])) {
-            session_regenerate_id(true);
-            $_SESSION['user']=['id'=>(int)$u['id'],'role'=>'admin','full_name'=>$u['full_name']??$u['username']??'Administrator'];
-            header('Location: admin/index.php'); exit;
+        $retryAfter=login_rate_check($loginName);
+        if ($retryAfter > 0) {
+            $error='Terlalu banyak percobaan login. Silakan coba lagi beberapa menit lagi.';
+        } else {
+            $s=db()->prepare("SELECT * FROM users WHERE username=? AND role='admin' LIMIT 1");
+            $s->execute([$loginName]); $u=$s->fetch();
+            if ($u && password_verify($password,(string)$u['password_hash'])) {
+                login_rate_success($loginName);
+                session_regenerate_id(true);
+                $_SESSION['user']=['id'=>(int)$u['id'],'role'=>'admin','full_name'=>$u['full_name']??$u['username']??'Administrator'];
+                header('Location: admin/index.php'); exit;
+            }
+            login_rate_failure($loginName);
+            $error='Username atau password administrator salah.';
         }
-        $error='Username atau password administrator salah.';
     }
 }
 ?>

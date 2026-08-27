@@ -14,12 +14,23 @@ if (!$exam) json_response(['error'=>'Ujian tidak ditemukan'],404);
 
 if ($attemptId > 0) {
     $attemptStmt = db()->prepare(
-        "SELECT * FROM attempts WHERE id=? AND exam_id=? AND user_id=? LIMIT 1"
+        "SELECT a.*, e.duration_seconds AS exam_duration_seconds, e.end_at AS exam_end_at
+         FROM attempts a JOIN exams e ON e.id=a.exam_id
+         WHERE a.id=? AND a.exam_id=? AND a.user_id=? LIMIT 1"
     );
     $attemptStmt->execute([$attemptId, $examId, participant_id()]);
     $attempt = $attemptStmt->fetch();
     if (!$attempt) json_response(['error'=>'Sesi ujian tidak valid'],403);
     if ($attempt['status'] !== 'active') json_response(['error'=>'Sesi ujian sudah terkunci'],409);
+
+    // Do not expose an active question set after the server-side deadline.
+    // The authoritative timer is the attempt deadline, not the browser clock.
+    $attempt = normalize_attempt_deadline($attempt);
+    $deadlineTs = strtotime((string)$attempt['deadline_at']);
+    if ($deadlineTs === false || $deadlineTs <= time()) {
+        expire_attempt($attempt);
+        json_response(['error'=>'Waktu ujian sudah habis'],409);
+    }
 }
 
 if ($attemptId > 0) {
@@ -41,9 +52,9 @@ if ($attemptId > 0) {
             'A'=>$row['option_a'], 'B'=>$row['option_b'],
             'C'=>$row['option_c'], 'D'=>$row['option_d'], 'E'=>$row['option_e']??null, 'F'=>$row['option_f']??null, 'G'=>$row['option_g']??null, 'H'=>$row['option_h']??null
         ];
-        $row['option_a'] = $original[$map['A']] ?? null;
-        $row['option_b'] = $original[$map['B']] ?? null;
-        $row['option_c'] = $original[$map['C']] ?? null;
+        $row['option_a'] = $original[$map['A'] ?? 'A'] ?? null;
+        $row['option_b'] = $original[$map['B'] ?? 'B'] ?? null;
+        $row['option_c'] = $original[$map['C'] ?? 'C'] ?? null;
         $row['option_d'] = $original[$map['D'] ?? 'D'] ?? null;
         foreach(['E','F','G','H'] as $k){ $row['option_'.strtolower($k)]=$original[$map[$k]??$k]??null; }
         $savedOriginal = $row['saved_selected_option'] ?? null;

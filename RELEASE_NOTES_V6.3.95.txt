@@ -1,0 +1,11 @@
+V6.3.95 — Participant Mobile UI
+
+- Redesigned the participant exam screen with a mobile-first layout.
+- Added compact sticky exam toolbar with remaining-time display and save status.
+- Added a mobile bottom navigation bar for Previous / Next / Submit actions.
+- Improved touch targets for answer choices and buttons.
+- Improved mobile spacing, typography, question cards, image sizing, and Matrix/DISC horizontal scrolling.
+- Improved participant header so it does not overflow on small screens.
+- Improved exam list cards and responsive layout.
+- No database schema change.
+- No participant answer API change.

@@ -65,5 +65,35 @@ function active_question_options(array $q): array {
 </form></section>
 <section class="ui-card import-card"><h3>⇩ Import Soal</h3><p class="ui-sub">CSV, XLS, atau XLSX.</p><form method="post" action="import_questions.php" enctype="multipart/form-data"><input type="hidden" name="csrf" value="<?=htmlspecialchars(csrf_token())?>"><input type="hidden" name="exam_id" value="<?=$id?>"><input type="file" name="file" required accept=".csv,.xls,.xlsx"><button class="ui-btn secondary full-btn" type="submit">Import</button></form></section>
 </aside></div></div><footer class="admin-footer"><span>© <?=date('Y')?> Ujian Online</span><span>Versi <?=htmlspecialchars(app_version())?></span></footer></main></div>
-<script>document.querySelector('.menu-toggle').onclick=()=>document.body.classList.toggle('sidebar-open');const type=document.getElementById('questionType'),optionList=document.getElementById('optionList'),correct=document.getElementById('correctOption'),useKey=document.getElementById('useAnswerKey');let count=4;const letters='ABCDEFGH';function renderOptions(){optionList.innerHTML='';correct.innerHTML='';for(let i=0;i<count;i++){let k=letters[i];optionList.insertAdjacentHTML('beforeend',`<div><label>Pilihan ${k}</label><input name="${k}" placeholder="Jawaban ${k}" ${i<2?'required':''}></div>`);correct.insertAdjacentHTML('beforeend',`<option value="${k}">${k}</option>`)}document.getElementById('addOption').disabled=count>=8;document.getElementById('removeOption').disabled=count<=2}function sync(){const v=type.value,isMatrix=v==='matrix_disc',isEssay=v==='essay';document.getElementById('mcqFields').style.display=(v==='mcq'||isMatrix)?'block':'none';document.getElementById('essayFields').style.display=isEssay?'block':'none';document.getElementById('matrixFields').style.display=isMatrix?'block':'none';document.getElementById('gradingFields').style.display=isMatrix?'none':'block';if(isMatrix)useKey.checked=false;document.getElementById('gradingDetails').style.display=useKey.checked?'block':'none';document.getElementById('standard-answer-key').style.display=v==='mcq'?'block':'none'}renderOptions();type.onchange=sync;useKey.onchange=sync;document.getElementById('addOption').onclick=()=>{if(count<8){count++;renderOptions()}};document.getElementById('removeOption').onclick=()=>{if(count>2){count--;renderOptions()}};sync();document.getElementById('questionSearch').oninput=function(){let q=this.value.toLowerCase(),n=0;document.querySelectorAll('.question-card').forEach(x=>{let ok=x.dataset.search.includes(q);x.style.display=ok?'':'none';if(ok)n++});document.getElementById('noQuestionResult').style.display=n?'none':''};</script>
+<script>
+document.querySelector('.menu-toggle').onclick=()=>document.body.classList.toggle('sidebar-open');
+const type=document.getElementById('questionType'),optionList=document.getElementById('optionList'),correct=document.getElementById('correctOption'),useKey=document.getElementById('useAnswerKey');
+let count=4;const letters='ABCDEFGH';
+function renderOptions(){
+  optionList.innerHTML='';correct.innerHTML='';
+  for(let i=0;i<count;i++){
+    let k=letters[i];
+    optionList.insertAdjacentHTML('beforeend',`<div><label>Pilihan ${k}</label><input name="${k}" placeholder="Jawaban ${k}" ${i<2?'required':''}></div>`);
+    correct.insertAdjacentHTML('beforeend',`<option value="${k}">${k}</option>`);
+  }
+  document.getElementById('addOption').disabled=count>=8;
+  document.getElementById('removeOption').disabled=count<=2;
+}
+function sync(){
+  const v=type.value,isMatrix=v==='matrix_disc',isEssay=v==='essay';
+  document.getElementById('mcqFields').style.display=(v==='mcq'||isMatrix)?'block':'none';
+  document.getElementById('essayFields').style.display=isEssay?'block':'none';
+  document.getElementById('matrixFields').style.display=isMatrix?'block':'none';
+  document.getElementById('gradingFields').style.display=isMatrix?'none':'block';
+  if(isMatrix)useKey.checked=false;
+  document.getElementById('gradingDetails').style.display=useKey.checked?'block':'none';
+  document.getElementById('standard-answer-key').style.display=v==='mcq'?'block':'none';
+  optionList.querySelectorAll('input').forEach((input,i)=>{ input.required = !isEssay && i<2; });
+}
+renderOptions();type.onchange=sync;useKey.onchange=sync;
+document.getElementById('addOption').onclick=()=>{if(count<8){count++;renderOptions();sync()}};
+document.getElementById('removeOption').onclick=()=>{if(count>2){count--;renderOptions();sync()}};
+sync();
+document.getElementById('questionSearch').oninput=function(){let q=this.value.toLowerCase(),n=0;document.querySelectorAll('.question-card').forEach(x=>{let ok=x.dataset.search.includes(q);x.style.display=ok?'':'none';if(ok)n++});document.getElementById('noQuestionResult').style.display=n?'none':''};
+</script>
 </body></html>

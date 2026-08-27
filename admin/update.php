@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config.php';
 require_login('admin');
 
 $root = realpath(__DIR__ . '/..');
+if ($root === false) throw new RuntimeException('Root aplikasi tidak dapat ditentukan.');
 $backupDir = $root . '/storage/backups';
 $uploadDir = $root . '/storage/update_uploads';
 $stagingRoot = $root . '/storage/update_staging';
@@ -27,7 +28,8 @@ function safe_zip_extract($zipFile, $target) {
     for ($i=0; $i<$zip->numFiles; $i++) {
         $name = $zip->getNameIndex($i); $stat = $zip->statIndex($i); $total += (int)($stat['size'] ?? 0);
         if ($total > 500 * 1024 * 1024) throw new RuntimeException('Ukuran hasil extract terlalu besar.');
-        if ($name === false || $name === '' || str_contains($name, "\0") || str_starts_with($name, '/') || preg_match('#^[A-Za-z]:#', $name) || preg_match('#(^|/)\.\.(/|$)#', str_replace('\\','/',$name))) throw new RuntimeException('Paket ZIP memiliki path tidak aman.');
+        $normalized = str_replace('\\','/',(string)$name);
+        if ($name === false || $name === '' || str_contains($name, "\0") || str_starts_with($normalized, '/') || preg_match('#^[A-Za-z]:#', $normalized) || preg_match('#(^|/)\.\.(/|$)#', $normalized)) throw new RuntimeException('Paket ZIP memiliki path tidak aman.');
     }
     if (!$zip->extractTo($target)) throw new RuntimeException('Gagal extract paket update.');
     $zip->close();
@@ -40,12 +42,11 @@ function find_project_dir($dir) {
 }
 function validate_update_manifest($pkg, $version) {
     $file = $pkg . '/update-manifest.json';
-    if (!is_file($file)) throw new RuntimeException('update-manifest.json tidak ditemukan. Paket update tidak dapat diverifikasi.');
-    $raw = file_get_contents($file);
-    $data = json_decode((string)$raw, true);
+    if (!is_readable($file)) throw new RuntimeException('update-manifest.json tidak dapat dibaca.');
+    $data = json_decode((string)file_get_contents($file), true);
     if (!is_array($data) || !isset($data['version'])) throw new RuntimeException('update-manifest.json tidak valid.');
     $manifestVersion = trim((string)$data['version']);
-    if ($manifestVersion !== $version) throw new RuntimeException('Versi manifest ('.$manifestVersion.') tidak sama dengan VERSION.txt ('.$version.'). Paket mungkin tidak lengkap atau dibuat dari source yang tidak sinkron.');
+    if ($manifestVersion !== $version) throw new RuntimeException('Versi manifest ('.$manifestVersion.') tidak sama dengan VERSION.txt ('.$version.'). Paket tidak sinkron.');
 }
 function copy_tree($from, $to, $exclude=[]) {
     $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($from, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
@@ -53,15 +54,19 @@ function copy_tree($from, $to, $exclude=[]) {
         $src = $item->getPathname(); $rel = substr($src, strlen($from)+1); $relNorm = str_replace('\\','/',$rel);
         foreach ($exclude as $x) if ($relNorm === $x || str_starts_with($relNorm, rtrim($x,'/') . '/')) continue 2;
         $dst = $to . '/' . $rel;
-        if ($item->isDir()) { if (!is_dir($dst)) mkdir($dst, 0775, true); }
-        else { if (!is_dir(dirname($dst))) mkdir(dirname($dst), 0775, true); if (!copy($src,$dst)) throw new RuntimeException('Gagal menyalin: '.$relNorm); }
+        if ($item->isDir()) { if (!is_dir($dst) && !mkdir($dst, 0775, true) && !is_dir($dst)) throw new RuntimeException('Gagal membuat direktori: '.$relNorm); }
+        else { if (!is_dir(dirname($dst)) && !mkdir(dirname($dst), 0775, true) && !is_dir(dirname($dst))) throw new RuntimeException('Gagal membuat direktori tujuan.'); if (!copy($src,$dst)) throw new RuntimeException('Gagal menyalin: '.$relNorm); }
     }
 }
 function create_backup($root, $backupDir) {
     $name='before_update_'.date('Ymd_His').'.zip'; $file=$backupDir.'/'.$name; $zip=new ZipArchive();
     if ($zip->open($file, ZipArchive::CREATE|ZipArchive::OVERWRITE)!==true) throw new RuntimeException('Gagal membuat backup.');
-    $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::LEAVES_ONLY);
-    foreach ($it as $item) { $path=$item->getPathname(); $rel=substr($path,strlen($root)+1); $n=str_replace('\\','/',$rel); if (str_starts_with($n,'storage/backups/') || str_starts_with($n,'storage/update_uploads/') || str_starts_with($n,'storage/update_staging/')) continue; $zip->addFile($path,$rel); }
+    $it=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), FilesystemIterator::LEAVES_ONLY);
+    foreach ($it as $item) {
+        $path=$item->getPathname(); $rel=substr($path,strlen($root)+1); $n=str_replace('\\','/',$rel);
+        if (str_starts_with($n,'storage/backups/') || str_starts_with($n,'storage/update_uploads/') || str_starts_with($n,'storage/update_staging/') || $n === 'config.local.php') continue;
+        if (is_readable($path)) $zip->addFile($path,$rel);
+    }
     $zip->close(); return $file;
 }
 function csrf_input() { return '<input type="hidden" name="csrf" value="'.htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8').'">'; }
@@ -76,17 +81,21 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             $tmpInfo = new finfo(FILEINFO_MIME_TYPE); $mime = $tmpInfo->file($f['tmp_name']); $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
             if ($ext !== 'zip' || !in_array($mime,['application/zip','application/x-zip-compressed','application/octet-stream'],true)) throw new RuntimeException('File harus berupa ZIP.');
             $id=bin2hex(random_bytes(8)); $stored=$uploadDir.'/update_'.$id.'.zip'; if (!move_uploaded_file($f['tmp_name'],$stored)) throw new RuntimeException('Gagal menyimpan file upload.');
-            $stage=$stagingRoot.'/'.$id; mkdir($stage,0775,true); safe_zip_extract($stored,$stage); $pkg=find_project_dir($stage);
-            $new=trim((string)file_get_contents($pkg.'/VERSION.txt')); if (!preg_match('/^\d+\.\d+\.\d+$/',$new)) throw new RuntimeException('Format VERSION.txt tidak valid.');
+            $stage=$stagingRoot.'/'.$id; if (!mkdir($stage,0775,true) && !is_dir($stage)) throw new RuntimeException('Gagal membuat staging update.');
+            safe_zip_extract($stored,$stage); $pkg=find_project_dir($stage);
+            $versionFile=$pkg.'/VERSION.txt'; if (!is_readable($versionFile)) throw new RuntimeException('VERSION.txt pada paket tidak dapat dibaca.');
+            $new=trim((string)file_get_contents($versionFile)); if (!preg_match('/^\d+\.\d+\.\d+$/',$new)) throw new RuntimeException('Format VERSION.txt tidak valid.');
             validate_update_manifest($pkg, $new);
             if (version_compare($new, app_version(), '<=')) throw new RuntimeException('Versi paket ('.$new.') harus lebih baru dari versi aplikasi ('.app_version().').');
-            $backup=create_backup($root,$backupDir); $exclude=['config.php','storage','uploads','release','.git']; copy_tree($pkg,$root,$exclude);
-            file_put_contents($root.'/VERSION.txt',$new.PHP_EOL,LOCK_EX);
+            $backup=create_backup($root,$backupDir); $exclude=['config.php','config.local.php','storage','uploads','release','.git']; copy_tree($pkg,$root,$exclude);
+            if (!is_writable($root)) throw new RuntimeException('Direktori aplikasi tidak writable oleh PHP-FPM. Perbaiki permission sebelum update.');
+            if (file_put_contents($root.'/VERSION.txt',$new.PHP_EOL,LOCK_EX) === false) throw new RuntimeException('VERSION.txt tidak dapat ditulis.');
             $message='Update berhasil diinstal ke versi '.$new.'.'; $details=['Backup: '.basename($backup),'Paket: '.basename($stored),'Versi baru: '.$new,'Manifest tervalidasi']; rrmdir($stage);
         }
     } catch (Throwable $e) { $error=$e->getMessage(); }
 }
-$current = is_file($root.'/VERSION.txt') ? trim(file_get_contents($root.'/VERSION.txt')) : app_version();
+$versionPath=$root.'/VERSION.txt';
+$current = is_readable($versionPath) ? trim((string)file_get_contents($versionPath)) : app_version();
 ?>
 <!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Update Sistem — Ujian Online</title><link rel="stylesheet" href="assets/admin-ui.css"></head><body class="update-page">
 <div class="admin-layout"><aside class="admin-sidebar"><div class="admin-brand"><span class="mark">✓</span> Ujian Online</div><div class="admin-section">MENU UTAMA</div><nav class="admin-nav"><a href="index.php"><span class="ico">⌂</span>Dashboard</a><a href="index.php#ujian-list"><span class="ico">▣</span>Ujian</a><a href="participants.php"><span class="ico">♟</span>Peserta</a><a href="templates.php"><span class="ico">⇩</span>Template Import Soal</a></nav><div class="admin-section">SISTEM</div><nav class="admin-nav"><a class="active" href="update.php"><span class="ico">↻</span>Update Sistem</a></nav><div class="system-box"><h4>Informasi Sistem</h4><div class="system-row"><span>Versi Aplikasi</span><span class="version-chip"><?=htmlspecialchars($current)?></span></div><div class="system-row"><span>Update ZIP</span><span class="prod-chip">Aktif</span></div><div class="system-row"><span>Environment</span><span class="prod-chip">Production</span></div></div></aside>

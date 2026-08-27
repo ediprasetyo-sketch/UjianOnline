@@ -42,6 +42,9 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+/* Exam pages/API responses contain participant data and answers; never cache them. */
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
 if ($isHttps) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 
 function public_base_url(): string {

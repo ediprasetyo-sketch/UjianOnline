@@ -10,7 +10,7 @@ $qid=(int)($b['question_id']??0);
 if($attemptId<1||$qid<1)json_response(['error'=>'Data jawaban tidak lengkap'],400);
 
 // Jawaban yang sedang dalam perjalanan boleh disimpan maksimal 2 detik setelah
-auto-submit agar jawaban yang sudah diketik tidak hilang. Ini bukan perpanjangan waktu.
+// auto-submit agar jawaban yang sudah diketik tidak hilang. Ini bukan perpanjangan waktu.
 $s=db()->prepare("SELECT a.*,e.duration_seconds AS exam_duration_seconds,e.end_at AS exam_end_at
                   FROM attempts a JOIN exams e ON e.id=a.exam_id
                   WHERE a.id=? AND a.user_id=? LIMIT 1");

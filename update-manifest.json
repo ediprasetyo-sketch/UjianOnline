@@ -1,12 +1,11 @@
 {
-  "version": "6.3.96",
-  "release": "V6.3.96 Production Recovery and Update Guard",
+  "version": "6.3.97",
+  "release": "V6.3.97 Session Bootstrap and Production Gate Fix",
   "changelog": [
-    "Menambahkan root index.php yang aman dan bebas hard-coded filesystem path.",
-    "Memperketat validasi paket update agar entrypoint utama wajib ada sebelum instalasi.",
-    "Menyinkronkan VERSION.txt dan update-manifest.json ke versi 6.3.96.",
-    "Menambahkan pemeriksaan konfigurasi, syntax PHP, runtime path, dan smoke test sebagai bagian dari doctor production.",
-    "Paket update tidak membawa config.php produksi sehingga kredensial database tetap dipertahankan."
+    "Menghapus session_start() ganda dari peserta/index.php karena config.php sudah menjadi pemilik inisialisasi session.",
+    "Memastikan release gate menolak source yang menjalankan session_start() sebelum config.php.",
+    "Smoke test production tetap wajib melewati PHP-FPM, database, Nginx, HTTPS/public host, dan active exam link sebelum update dinyatakan berhasil.",
+    "VERSION.txt dan update-manifest.json disinkronkan ke versi 6.3.97."
   ],
-  "notes": "Bangun paket dari source repository ini. Jangan membuat ZIP manual dari folder lama. Pastikan VERSION.txt, update-manifest.json, index.php, login.php, admin/update.php, dan folder aplikasi ikut masuk paket."
+  "notes": "Build paket hanya dari source repository ini. Jangan menyalin config.php produksi atau membuat ZIP dari folder produksi lama."
 }

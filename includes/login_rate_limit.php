@@ -62,13 +62,13 @@ function login_rate_failure(string $login): void {
     $upsert = $pdo->prepare("INSERT INTO login_rate_limits(rate_key,attempts,window_started_at,blocked_until)
         VALUES(?,1,NOW(),NULL)
         ON DUPLICATE KEY UPDATE
-          attempts = IF(window_started_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE), 1, attempts + 1),
-          window_started_at = IF(window_started_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE), NOW(), window_started_at),
           blocked_until = IF(
-              IF(window_started_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE), 1, attempts + 1) >= 5,
-              DATE_ADD(IF(window_started_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE), NOW(), window_started_at), INTERVAL 15 MINUTE),
-              NULL
-          )");
+              window_started_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE),
+              NULL,
+              IF(attempts >= 4, DATE_ADD(window_started_at, INTERVAL 15 MINUTE), NULL)
+          ),
+          attempts = IF(window_started_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE), 1, attempts + 1),
+          window_started_at = IF(window_started_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE), NOW(), window_started_at)");
     foreach ($keys as $key) $upsert->execute([$key]);
 
     // Keep the small table bounded without requiring a scheduled job.

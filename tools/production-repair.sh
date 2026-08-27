@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 
 # One-command production deployment/repair for Synology.
-# ROOT may be supplied when this script is executed from a temporary file.
+# Safety rule: NOTHING is considered successful until the real public URL,
+# PHP runtime, database, permissions and active exam link all pass smoke tests.
 ROOT="${ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)}"
 PHP="${PHP_BIN:-/usr/local/bin/php82}"
 REMOTE="origin"
@@ -15,21 +16,27 @@ LOCK="$ROOT/.production-release.lock"
 
 say(){ printf '\n[%s] %s\n' "$1" "$2" | tee -a "$LOG"; }
 die(){ printf '\n============================================\n FINAL RESULT : GAGAL\n============================================\n%s\nLOG=%s\n' "$1" "$LOG" | tee -a "$LOG"; exit 1; }
+
 rollback(){
   local rc=$?
   set +e
-  if [ -n "${BEFORE:-}" ] && [ -d "$ROOT/.git" ]; then git reset --hard "$BEFORE" >/dev/null 2>&1 || true; fi
-  if [ -f "$BACKUP/config.local.php" ]; then cp -f "$BACKUP/config.local.php" "$ROOT/config.local.php" || true; fi
+  if [ -n "${BEFORE:-}" ] && [ -d "$ROOT/.git" ]; then
+    git reset --hard "$BEFORE" >/dev/null 2>&1 || true
+  fi
+  if [ -f "$BACKUP/config.local.php" ]; then cp -p "$BACKUP/config.local.php" "$ROOT/config.local.php" || true; fi
   rm -f "$ROOT/.production_release_test.php" "$ROOT/.production_release_test.out"
   chmod 644 "$ROOT/config.php" "$ROOT/VERSION.txt" "$ROOT/health.php" 2>/dev/null || true
   [ -f "$ROOT/config.local.php" ] && chmod 640 "$ROOT/config.local.php" 2>/dev/null || true
   sudo synosystemctl restart pkgctl-PHP8.2 >/dev/null 2>&1 || true
   sleep 2
   sudo synosystemctl restart nginx >/dev/null 2>&1 || true
+  sleep 2
   return $rc
 }
+
 cleanup(){ rm -rf "$STAGE"; rm -f "$LOCK"; }
 trap cleanup EXIT
+trap 'rollback; exit 1' ERR
 
 [ ! -e "$LOCK" ] || die "Deployment lain sedang berjalan: $LOCK"
 printf '%s\n' "$$" > "$LOCK"
@@ -59,7 +66,7 @@ say "3/10" "AUDIT RELEASE SEBELUM DEPLOY"
 rm -rf "$STAGE" && mkdir -p "$STAGE"
 git archive "$TARGET" | tar -x -C "$STAGE"
 
-REQUIRED=(VERSION.txt update-manifest.json index.php config.php health.php login.php logout.php admin/index.php admin/update.php admin/participants.php peserta/index.php peserta/access.php)
+REQUIRED=(VERSION.txt update-manifest.json index.php config.php health.php login.php admin/index.php admin/participants.php admin/update.php peserta/index.php peserta/access.php peserta/verify.php peserta/finish.php)
 for f in "${REQUIRED[@]}"; do [ -r "$STAGE/$f" ] || die "FILE WAJIB TIDAK ADA/TIDAK TERBACA: $f"; done
 
 VERSION="$(tr -d '\r\n' < "$STAGE/VERSION.txt")"
@@ -68,27 +75,34 @@ printf 'VERSION=%s MANIFEST=%s\n' "$VERSION" "$MANIFEST_VERSION" | tee -a "$LOG"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "VERSION.txt tidak valid."
 [ "$VERSION" = "$MANIFEST_VERSION" ] || die "VERSION.txt dan update-manifest.json tidak sinkron."
 
-if grep -RInE --include='*.php' "require(_once)?[[:space:]]*\(?[[:space:]]*['\"][^'\"]*\.\./config\.php['\"]" "$STAGE" 2>/dev/null | grep -E '/(index|login|logout|health)\.php:' >/tmp/ujian-root-ref.$$.txt; then
-  cat /tmp/ujian-root-ref.$$.txt | tee -a "$LOG"; rm -f /tmp/ujian-root-ref.$$.txt
-  die "Root entrypoint memiliki referensi ../config.php yang salah."
+# Never allow a release to depend on a NAS-specific absolute filesystem path.
+if grep -RInE --include='*.php' --exclude-dir=tools --exclude-dir=storage '/volume1/web/ujian-online' "$STAGE" >/tmp/ujian-hardpath.$$.txt 2>/dev/null; then
+  cat /tmp/ujian-hardpath.$$.txt | tee -a "$LOG"
+  rm -f /tmp/ujian-hardpath.$$.txt
+  die "Release mengandung hard-coded production filesystem path."
 fi
-rm -f /tmp/ujian-root-ref.$$.txt
+rm -f /tmp/ujian-hardpath.$$.txt
 
-PATH_HITS="/tmp/ujian-path-$TS.txt"; : > "$PATH_HITS"
+# A session may not be started before config.php. config.php owns session setup.
 while IFS= read -r -d '' f; do
   rel="${f#$STAGE/}"
-  case "$rel" in tools/*|storage/*|release/*|releases/*) continue ;; esac
-  if grep -nF '/volume1/web/ujian-online' "$f" >> "$PATH_HITS" 2>/dev/null; then printf 'FILE=%s\n' "$rel" >> "$PATH_HITS"; fi
-done < <(find "$STAGE" -type f -name '*.php' -print0)
-if [ -s "$PATH_HITS" ]; then cat "$PATH_HITS" | tee -a "$LOG"; rm -f "$PATH_HITS"; die "Release mengandung hard-coded production path."; fi
-rm -f "$PATH_HITS"
+  config_line="$(grep -nE "require(_once)?[[:space:]]+__DIR__.*config\.php" "$f" | head -1 | cut -d: -f1 || true)"
+  session_line="$(grep -nE '(^|[^[:alnum:]_])session_start[[:space:]]*\(' "$f" | head -1 | cut -d: -f1 || true)"
+  if [ -n "$session_line" ] && [ -z "$config_line" ]; then
+    die "session_start() ditemukan tanpa config.php: $rel"
+  fi
+  if [ -n "$session_line" ] && [ -n "$config_line" ] && [ "$session_line" -lt "$config_line" ]; then
+    die "session_start() dijalankan sebelum config.php: $rel"
+  fi
+done < <(find "$STAGE" -type f -name '*.php' ! -path "$STAGE/tools/*" -print0)
 
 say "4/10" "PHP SYNTAX AUDIT SELURUH RELEASE"
 PHP_COUNT=0
 while IFS= read -r -d '' f; do
   PHP_COUNT=$((PHP_COUNT+1))
   if ! "$PHP" -l "$f" >/tmp/ujian-php-lint.$$ 2>&1; then
-    cat /tmp/ujian-php-lint.$$ | tee -a "$LOG"; rm -f /tmp/ujian-php-lint.$$
+    cat /tmp/ujian-php-lint.$$ | tee -a "$LOG"
+    rm -f /tmp/ujian-php-lint.$$
     die "PHP syntax error: ${f#$STAGE/}"
   fi
 done < <(find "$STAGE" -type f -name '*.php' ! -path "$STAGE/tools/*" -print0)
@@ -97,13 +111,20 @@ printf 'PHP files checked: %s\n' "$PHP_COUNT" | tee -a "$LOG"
 
 say "5/10" "DEPLOY EXACT COMMIT + PRESERVE LOCAL CONFIG"
 git reset --hard "$TARGET" >/dev/null
-if [ -f "$BACKUP/config.local.php" ]; then cp -p "$BACKUP/config.local.php" "$ROOT/config.local.php"; else printf '%s\n' 'config.local.php tidak ada; aplikasi harus menggunakan DB_* environment variables.' | tee -a "$LOG"; fi
+if [ -f "$BACKUP/config.local.php" ]; then
+  cp -p "$BACKUP/config.local.php" "$ROOT/config.local.php"
+else
+  printf '%s\n' 'config.local.php tidak ada; aplikasi harus menggunakan DB_* environment variables.' | tee -a "$LOG"
+fi
 
+# Public source is readable; writable application directories keep write access.
 find "$ROOT" -type d ! -path "$ROOT/.git*" -exec chmod 755 {} + 2>/dev/null || true
 find "$ROOT" -type f -name '*.php' -exec chmod 644 {} + 2>/dev/null || true
 find "$ROOT" -type f -name '*.txt' -exec chmod 644 {} + 2>/dev/null || true
 [ -f "$ROOT/config.local.php" ] && chmod 640 "$ROOT/config.local.php"
-for d in storage storage/backups storage/update_uploads storage/update_staging; do [ -d "$ROOT/$d" ] && chmod 775 "$ROOT/$d"; done
+for d in storage storage/backups storage/update_uploads storage/update_staging; do
+  [ -d "$ROOT/$d" ] && chmod 775 "$ROOT/$d"
+done
 
 for f in "${REQUIRED[@]}"; do [ -r "$ROOT/$f" ] || die "File production tidak readable setelah deploy: $f"; done
 
@@ -123,33 +144,76 @@ chmod 644 "$TEST"
 if ! "$PHP" "$TEST" > "$ROOT/.production_release_test.out" 2>&1; then
   cat "$ROOT/.production_release_test.out" | tee -a "$LOG"
   rollback
+  trap - ERR
   die "Local config/database preflight gagal. Production dikembalikan ke commit sebelumnya."
 fi
 cat "$ROOT/.production_release_test.out" | tee -a "$LOG"
 rm -f "$TEST" "$ROOT/.production_release_test.out"
 
 say "7/10" "RESTART PHP-FPM + NGINX"
-sudo synosystemctl restart pkgctl-PHP8.2 >/tmp/ujian-release-php.out 2>&1 || { cat /tmp/ujian-release-php.out | tee -a "$LOG"; rollback; die "PHP-FPM gagal restart."; }
+sudo synosystemctl restart pkgctl-PHP8.2 >/tmp/ujian-release-php.out 2>&1 || {
+  cat /tmp/ujian-release-php.out | tee -a "$LOG"
+  rollback
+  trap - ERR
+  die "PHP-FPM gagal restart."
+}
 sleep 3
-sudo synosystemctl restart nginx >/tmp/ujian-release-nginx.out 2>&1 || { cat /tmp/ujian-release-nginx.out | tee -a "$LOG"; rollback; die "Nginx gagal restart."; }
+sudo synosystemctl restart nginx >/tmp/ujian-release-nginx.out 2>&1 || {
+  cat /tmp/ujian-release-nginx.out | tee -a "$LOG"
+  rollback
+  trap - ERR
+  die "Nginx gagal restart."
+}
 sleep 3
 
-say "8/10" "HTTP RUNTIME + DATABASE SMOKE TEST"
+say "8/10" "REAL PUBLIC HOST + EXAM LINK SMOKE TEST"
+# The old test only queried http://127.0.0.1. That can return 200 for a
+# different Nginx server block while the real HTTPS domain returns 403.
+PUBLIC_URL="$($PHP -r 'require $argv[1]; echo public_base_url();' "$ROOT/config.php" 2>/tmp/ujian-public-url.err || true)"
+if [ -z "$PUBLIC_URL" ]; then
+  PUBLIC_URL="https://ujian.revolearning.online"
+fi
+PUBLIC_URL="${PUBLIC_URL%/}"
+printf 'PUBLIC_URL=%s\n' "$PUBLIC_URL" | tee -a "$LOG"
+
+EXAM_TOKEN="$($PHP -r 'require $argv[1]; $v=db()->query("SELECT public_token FROM exams WHERE active=1 ORDER BY id DESC LIMIT 1")->fetchColumn(); echo (string)$v;' "$ROOT/config.php" 2>/tmp/ujian-exam-token.err || true)"
+[ -n "$EXAM_TOKEN" ] || die "Tidak ada ujian aktif untuk smoke test. Aktifkan minimal satu ujian sebelum deploy production."
+printf 'ACTIVE_EXAM_TOKEN=%s...\n' "${EXAM_TOKEN:0:8}" | tee -a "$LOG"
+
 FAIL=0
-for u in / /health.php /login.php /admin/index.php /admin/participants.php /admin/update.php /peserta/index.php /peserta/access.php; do
-  body="/tmp/ujian-http-$TS.html"
-  meta="$(curl -sS --max-time 15 -o "$body" -w 'HTTP=%{http_code} SIZE=%{size_download}' "http://127.0.0.1$u" || true)"
-  printf '%-32s %s\n' "$u" "$meta" | tee -a "$LOG"
+http_test(){
+  local name="$1" url="$2" expect="$3" body meta code
+  body="/tmp/ujian-http-$TS-${RANDOM}.html"
+  meta="$(curl -ksS -L --max-time 20 -o "$body" -w 'HTTP=%{http_code} SIZE=%{size_download} URL=%{url_effective}' "$url" || true)"
   code="$(printf '%s' "$meta" | sed -n 's/.*HTTP=\([0-9][0-9][0-9]\).*/\1/p')"
-  case "${code:-000}" in 200|301|302|303|307|308) ;; *) FAIL=1; echo "--- ERROR $u ---" | tee -a "$LOG"; grep -E 'Fatal error:|Uncaught|Warning:|Permission denied|No such file|failed to open|HEALTHCHECK FAILED' "$body" 2>/dev/null | head -30 | tee -a "$LOG" || true ;; esac
+  printf '%-24s %s\n' "$name" "$meta" | tee -a "$LOG"
+  if [ "${code:-000}" != "$expect" ]; then
+    FAIL=1
+    echo "--- FAILED $name expected HTTP=$expect ---" | tee -a "$LOG"
+    head -c 4000 "$body" | tee -a "$LOG" || true
+    echo | tee -a "$LOG"
+  fi
+  if grep -Eiq 'Fatal error:|Uncaught (Error|Exception)|Permission denied|failed to open stream|Access denied|No such file or directory|Warning:.*session|HEALTHCHECK FAILED' "$body"; then
+    FAIL=1
+    echo "--- PHP/WEB ERROR DETECTED: $name ---" | tee -a "$LOG"
+    grep -Ei 'Fatal error:|Uncaught (Error|Exception)|Permission denied|failed to open stream|Access denied|No such file or directory|Warning:.*session|HEALTHCHECK FAILED' "$body" | head -30 | tee -a "$LOG" || true
+  fi
   rm -f "$body"
-done
+}
+
+http_test "ROOT" "$PUBLIC_URL/" "200"
+http_test "LOGIN" "$PUBLIC_URL/login.php" "200"
+http_test "ADMIN" "$PUBLIC_URL/admin/index.php" "200"
+http_test "ADMIN PARTICIPANTS" "$PUBLIC_URL/admin/participants.php" "200"
+http_test "ADMIN UPDATE" "$PUBLIC_URL/admin/update.php" "200"
+http_test "PARTICIPANT ACCESS" "$PUBLIC_URL/peserta/access.php?exam=$(printf '%s' "$EXAM_TOKEN" | sed 's/ /%20/g')" "200"
 
 if [ "$FAIL" -ne 0 ]; then
   echo "--- NGINX ERROR LOG ---" | tee -a "$LOG"
-  sudo tail -n 100 /var/log/nginx/error.log 2>/dev/null | tee -a "$LOG" || true
+  sudo tail -n 120 /var/log/nginx/error.log 2>/dev/null | tee -a "$LOG" || true
   rollback
-  die "HTTP runtime test gagal. Production dikembalikan otomatis ke commit sebelum update."
+  trap - ERR
+  die "REAL PUBLIC HOST smoke test gagal. Production dikembalikan otomatis ke commit sebelum update."
 fi
 
 say "9/10" "FINAL INTEGRITY + CONFIG PRESERVATION"
@@ -158,4 +222,4 @@ for f in "${REQUIRED[@]}"; do [ -r "$ROOT/$f" ] || die "Final integrity gagal: $
 [ "$(git rev-parse HEAD)" = "$TARGET" ] || die "Commit production tidak sesuai TARGET GitHub."
 
 say "10/10" "FINAL RESULT"
-printf '============================================\n FINAL RESULT : BERHASIL\n============================================\nVERSION=%s\nCOMMIT=%s\nBACKUP=%s\nLOG=%s\n\nAUDIT LULUS: source, VERSION/manifest, path, PHP syntax, config+DB, permissions, PHP-FPM melalui HTTP, health endpoint, dan smoke test seluruh halaman.\n' "$VERSION" "$(git rev-parse --short HEAD)" "$BACKUP" "$LOG" | tee -a "$LOG"
+printf '============================================\n FINAL RESULT : BERHASIL\n============================================\nVERSION=%s\nCOMMIT=%s\nBACKUP=%s\nLOG=%s\n\nAUDIT LULUS: source, VERSION/manifest, hard-path, session order, PHP syntax, config+DB, permissions, PHP-FPM, Nginx, HTTPS/public host, active exam link, dan halaman utama.\n' "$VERSION" "$(git rev-parse --short HEAD)" "$BACKUP" "$LOG" | tee -a "$LOG"

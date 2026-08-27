@@ -83,18 +83,20 @@ if grep -RInE --include='*.php' --exclude-dir=tools --exclude-dir=storage '/volu
 fi
 rm -f /tmp/ujian-hardpath.$$.txt
 
-# A session may not be started before config.php. config.php owns session setup.
+# config.php is the ONLY owner of session initialization.
+# Any other PHP file calling session_start() is a release blocker; allowing it
+# creates the exact warnings seen in production when config.php is loaded later.
 while IFS= read -r -d '' f; do
   rel="${f#$STAGE/}"
-  config_line="$(grep -nE "require(_once)?[[:space:]]+__DIR__.*config\.php" "$f" | head -1 | cut -d: -f1 || true)"
   session_line="$(grep -nE '(^|[^[:alnum:]_])session_start[[:space:]]*\(' "$f" | head -1 | cut -d: -f1 || true)"
-  if [ -n "$session_line" ] && [ -z "$config_line" ]; then
-    die "session_start() ditemukan tanpa config.php: $rel"
-  fi
-  if [ -n "$session_line" ] && [ -n "$config_line" ] && [ "$session_line" -lt "$config_line" ]; then
-    die "session_start() dijalankan sebelum config.php: $rel"
+  [ "$rel" = "config.php" ] && continue
+  if [ -n "$session_line" ]; then
+    die "session_start() hanya boleh berada di config.php: $rel:$session_line"
   fi
 done < <(find "$STAGE" -type f -name '*.php' ! -path "$STAGE/tools/*" -print0)
+
+# config.php itself must own session_start().
+grep -qE 'session_start[[:space:]]*\(' "$STAGE/config.php" || die "config.php tidak memiliki session_start()."
 
 say "4/10" "PHP SYNTAX AUDIT SELURUH RELEASE"
 PHP_COUNT=0
@@ -222,4 +224,4 @@ for f in "${REQUIRED[@]}"; do [ -r "$ROOT/$f" ] || die "Final integrity gagal: $
 [ "$(git rev-parse HEAD)" = "$TARGET" ] || die "Commit production tidak sesuai TARGET GitHub."
 
 say "10/10" "FINAL RESULT"
-printf '============================================\n FINAL RESULT : BERHASIL\n============================================\nVERSION=%s\nCOMMIT=%s\nBACKUP=%s\nLOG=%s\n\nAUDIT LULUS: source, VERSION/manifest, hard-path, session order, PHP syntax, config+DB, permissions, PHP-FPM, Nginx, HTTPS/public host, active exam link, dan halaman utama.\n' "$VERSION" "$(git rev-parse --short HEAD)" "$BACKUP" "$LOG" | tee -a "$LOG"
+printf '============================================\n FINAL RESULT : BERHASIL\n============================================\nVERSION=%s\nCOMMIT=%s\nBACKUP=%s\nLOG=%s\n\nAUDIT LULUS: source, VERSION/manifest, hard-path, session architecture, PHP syntax, config+DB, permissions, PHP-FPM, Nginx, HTTPS/public host, active exam link, dan halaman utama.\n' "$VERSION" "$(git rev-parse --short HEAD)" "$BACKUP" "$LOG" | tee -a "$LOG"

@@ -2,11 +2,13 @@
 declare(strict_types=1);
 require __DIR__.'/../config.php';
 require_login('admin');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit('Metode tidak diizinkan.'); }
 check_csrf();
 
 $attemptId=(int)($_POST['attempt_id']??0);
 $action=trim((string)($_POST['action']??'finalize'));
 if($attemptId<1) exit('Attempt tidak valid.');
+if(!in_array($action,['finalize','reopen'],true)) exit('Aksi tidak valid.');
 
 $st=db()->prepare("SELECT id,exam_id,user_id FROM attempts WHERE id=? LIMIT 1");
 $st->execute([$attemptId]);
@@ -19,29 +21,22 @@ $latestEvent=(string)($latest->fetchColumn()?:'');
 
 if($action==='reopen'){
     if($latestEvent!=='essay_finalized'){
-        header('Location: essay_grading.php?attempt_id='.$attemptId);
-        exit;
+        header('Location: essay_grading.php?attempt_id='.$attemptId); exit;
     }
-    $payload=json_encode(['action'=>'reopen','reason'=>'admin_reopen'],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+    $payload=json_encode(['action'=>'reopen','reason'=>'admin_reopen','reopened_by'=>(int)($_SESSION['user']['id']??0)],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
     db()->prepare("INSERT INTO audit_logs(user_id,exam_id,attempt_id,event_type,event_data) VALUES(?,?,?,?,?)")->execute([(int)($_SESSION['user']['id']??0),(int)$attempt['exam_id'],$attemptId,'essay_reopened',$payload]);
-    header('Location: essay_grading.php?attempt_id='.$attemptId.'&reopened=1');
-    exit;
+    header('Location: essay_grading.php?attempt_id='.$attemptId.'&reopened=1'); exit;
 }
 
 if($latestEvent==='essay_finalized'){
-    header('Location: essay_grading.php?attempt_id='.$attemptId.'&finalized=1');
-    exit;
+    header('Location: essay_grading.php?attempt_id='.$attemptId.'&finalized=1'); exit;
 }
 
 $check=db()->prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN a.essay_score IS NOT NULL THEN 1 ELSE 0 END) AS graded FROM questions q LEFT JOIN answers a ON a.question_id=q.id AND a.attempt_id=? WHERE q.exam_id=? AND q.type='essay' AND q.use_answer_key=1 AND q.points>0");
 $check->execute([$attemptId,(int)$attempt['exam_id']]);
 $progress=$check->fetch();
-$total=(int)($progress['total']??0);
-$graded=(int)($progress['graded']??0);
-if($graded<$total){
-    header('Location: essay_grading.php?attempt_id='.$attemptId.'&incomplete=1');
-    exit;
-}
+$total=(int)($progress['total']??0); $graded=(int)($progress['graded']??0);
+if($graded<$total){ header('Location: essay_grading.php?attempt_id='.$attemptId.'&incomplete=1'); exit; }
 
 $sum=db()->prepare("SELECT COALESCE(SUM(CASE WHEN q.type='mcq' AND q.use_answer_key=1 AND a.selected_option=q.correct_option THEN q.points ELSE 0 END),0)+COALESCE(SUM(CASE WHEN q.type='essay' AND q.use_answer_key=1 THEN LEAST(GREATEST(COALESCE(a.essay_score,0),0),q.points) ELSE 0 END),0) AS total FROM questions q LEFT JOIN answers a ON a.question_id=q.id AND a.attempt_id=? WHERE q.exam_id=?");
 $sum->execute([$attemptId,(int)$attempt['exam_id']]);
@@ -54,9 +49,7 @@ try{
     db()->prepare("INSERT INTO audit_logs(user_id,exam_id,attempt_id,event_type,event_data) VALUES(?,?,?,?,?)")->execute([(int)($_SESSION['user']['id']??0),(int)$attempt['exam_id'],$attemptId,'essay_finalized',$payload]);
     db()->commit();
 }catch(Throwable $e){
-    if(db()->inTransaction()) db()->rollBack();
+    if(db()->inTransaction())db()->rollBack();
     exit('Gagal memfinalisasi penilaian Essay.');
 }
-
-header('Location: essay_grading.php?attempt_id='.$attemptId.'&finalized=1');
-exit;
+header('Location: essay_grading.php?attempt_id='.$attemptId.'&finalized=1'); exit;

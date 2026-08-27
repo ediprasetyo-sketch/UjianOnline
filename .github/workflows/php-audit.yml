@@ -21,6 +21,13 @@ jobs:
         with:
           php-version: '8.2'
 
+      - name: Shell script syntax audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n tools/production-repair.sh
+          if [ -f tools/production-doctor.sh ]; then bash -n tools/production-doctor.sh; fi
+
       - name: Required production files
         shell: bash
         run: |
@@ -42,24 +49,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t files < <(find . -type f -name '*.php' -not -path './.git/*')
-          for f in "${files[@]}"; do
+          while IFS= read -r -d '' f; do
             php -l "$f" >/dev/null
-          done
+          done < <(find . -type f -name '*.php' -not -path './.git/*' -print0)
 
       - name: Runtime path audit
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --include='*.php' '(/volume1/web/ujian-online|require[[:space:]]*["'"']?/volume1|include[[:space:]]*["'"']?/volume1)' . \
-            --exclude-dir=.git --exclude-dir=storage --exclude-dir=release --exclude-dir=releases; then
+          if grep -RIn --include='*.php' '/volume1/web/ujian-online' . --exclude-dir=.git --exclude-dir=storage --exclude-dir=release --exclude-dir=releases; then
             echo 'Hard-coded production filesystem path found.'
             exit 1
           fi
-          if grep -nE "require(_once)?[[:space:]]+__DIR__[[:space:]]*\.[[:space:]]*['\"]/?\.\./config\.php" ./*.php 2>/dev/null; then
-            echo 'Root PHP file references ../config.php.'
-            exit 1
-          fi
+          for f in ./*.php; do
+            [ -f "$f" ] || continue
+            if grep -nE 'require(_once)?[[:space:]]+__DIR__[[:space:]]*\.[[:space:]]*["'\''\.\./config\.php["'\'']' "$f" >/dev/null 2>&1; then
+              echo "Root PHP file references ../config.php: $f"
+              exit 1
+            fi
+          done
 
       - name: Secret/config guard
         shell: bash

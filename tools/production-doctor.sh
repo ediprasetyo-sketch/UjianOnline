@@ -39,7 +39,10 @@ fi
 
 chmod 755 "$ROOT" "$ROOT/admin" "$ROOT/peserta" "$ROOT/includes" "$ROOT/api" 2>/dev/null || true
 chmod 644 "$ROOT"/*.php "$ROOT"/*.txt 2>/dev/null || true
-[ -f "$ROOT/config.local.php" ] && chmod 644 "$ROOT/config.local.php"
+if [ -f "$ROOT/config.local.php" ]; then
+  sudo chgrp "$FPM_GROUP" "$ROOT/config.local.php" 2>/dev/null || true
+  chmod 640 "$ROOT/config.local.php"
+fi
 find "$ROOT/admin" "$ROOT/peserta" "$ROOT/api" "$ROOT/includes" -type f -name '*.php' -exec chmod 644 {} \; 2>/dev/null || true
 
 rm -f "$ROOT/php_check.php" "$ROOT/_db_final_test.php" "$ROOT/_fix.php" 2>/dev/null || true

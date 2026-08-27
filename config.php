@@ -19,14 +19,24 @@ if ($dbHost === '' || $dbName === '' || $dbUser === '') {
 const APP_SESSION_NAME = 'ujian_online_session';
 date_default_timezone_set('Asia/Jakarta');
 
-$isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off');
-ini_set('session.use_only_cookies', '1');
-ini_set('session.use_strict_mode', '1');
-ini_set('session.cookie_httponly', '1');
-ini_set('session.cookie_samesite', 'Lax');
-if ($isHttps) ini_set('session.cookie_secure', '1');
-session_name(APP_SESSION_NAME);
-if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+/*
+ * Session initialization must happen before session_start().
+ * Some Synology/PHP-FPM configurations may already start a session before
+ * this file is included. In that case PHP forbids changing session settings;
+ * simply reuse the active session instead of producing warnings on every page.
+ */
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_samesite', 'Lax');
+    if ($isHttps) ini_set('session.cookie_secure', '1');
+    session_name(APP_SESSION_NAME);
+    session_start();
+} else {
+    $isHttps = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off');
+}
 
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
